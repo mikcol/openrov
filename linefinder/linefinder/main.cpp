@@ -62,6 +62,7 @@ int main(int argc, char *argv[])
     Mat cdst;       // final image
     Mat cannyImg;
     Mat greenImg;
+    Mat HSVImg;
     
 
 
@@ -120,9 +121,10 @@ int main(int argc, char *argv[])
         cvtColor( newImg, grayImg, CV_BGR2GRAY );
 */
         // Convert image to HSV
-        //greenImg = Mat(height, width, IPL_DEPTH_8U, 1);
-        cvtColor(newImg, greenImg, COLOR_BGR2HSV);
-        inRange(newImg, Scalar(60,255,128), Scalar(60,255,255), greenImg);
+        greenImg = Mat(height, width, IPL_DEPTH_8U, 3);
+        HSVImg = Mat(height, width, IPL_DEPTH_8U, 3);
+        cvtColor(newImg, HSVImg, CV_BGR2HSV);
+        inRange(HSVImg, Scalar(80/2,100,100), Scalar(140/2,255,255), greenImg);
         
         // Invert image
         //invImg = Mat(height, width, IPL_DEPTH_8U, 1 );
