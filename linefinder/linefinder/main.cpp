@@ -127,8 +127,8 @@ int main(int argc, char *argv[])
         inRange(HSVImg, Scalar(80/2,100,100), Scalar(140/2,255,255), greenImg);
         
         // Invert image
-        //invImg = Mat(height, width, IPL_DEPTH_8U, 1 );
-        //bitwise_not(greenImg,invImg);
+        invImg = Mat(height, width, IPL_DEPTH_8U, 1 );
+        bitwise_not(greenImg,invImg);
         
         // flip image
         blurImg = Mat(height, width, IPL_DEPTH_8U, 1 );
