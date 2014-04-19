@@ -82,7 +82,6 @@ int main(int argc, char *argv[])
     
     Mat background = Mat(height, width, IPL_DEPTH_8U,3);
     Mat openrov = Mat(86,60,IPL_DEPTH_8U,3);
-    
    
     
     
