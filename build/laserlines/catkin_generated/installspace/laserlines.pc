@@ -1,0 +1,8 @@
+prefix=/home/nicholas/openrov/install
+
+Name: laserlines
+Description: Description of laserlines
+Version: 0.0.0
+Cflags: -I/home/nicholas/openrov/install/include
+Libs: -L/home/nicholas/openrov/install/lib 
+Requires: 

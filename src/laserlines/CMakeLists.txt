@@ -9,7 +9,7 @@ find_package(catkin REQUIRED COMPONENTS
   std_msgs
   message_generation
 )
-
+find_package(OpenCV REQUIRED)
 ## System dependencies are found with CMake's conventions
 # find_package(Boost REQUIRED COMPONENTS system)
 
@@ -46,7 +46,8 @@ find_package(catkin REQUIRED COMPONENTS
 ## Generate messages in the 'msg' folder
  add_message_files(
    FILES
-   uglen.msg
+   LaserMsg.msg
+   Num.msg
 #   Message1.msg
 #   Message2.msg
  )
@@ -84,7 +85,7 @@ catkin_package(
 #  INCLUDE_DIRS include
 #  LIBRARIES laserlines
 #  CATKIN_DEPENDS roscpp std_msgs
-#  DEPENDS system_lib
+  DEPENDS opencv
 )
 
 ###########
@@ -96,7 +97,15 @@ catkin_package(
 # include_directories(include)
 include_directories(
   ${catkin_INCLUDE_DIRS}
+  ${OpenCV_INCLUDE_DIRS}
 )
+
+add_executable(laserlines src/laserlines.cpp)
+target_link_libraries(laserlines ${catkin_LIBRARIES} ${OpenCV_LIBRARIES})
+#target_link_libraries(laserlines ${OpenCV_LIBRARIES})
+
+add_executable(laserlistener src/laserlistener.cpp)
+target_link_libraries(laserlistener ${catkin_LIBRARIES})
 
 ## Declare a cpp library
 # add_library(laserlines
