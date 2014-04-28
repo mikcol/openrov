@@ -1,8 +1,0 @@
-prefix=/home/nicholas/openrov/devel
-
-Name: laserlines
-Description: Description of laserlines
-Version: 0.0.0
-Cflags: -I/home/nicholas/openrov/devel/include
-Libs: -L/home/nicholas/openrov/devel/lib 
-Requires: 

@@ -1,7 +1,0 @@
-set(_CATKIN_CURRENT_PACKAGE "laserlines")
-set(laserlines_MAINTAINER "nicholas <nicholas@todo.todo>")
-set(laserlines_DEPRECATED "")
-set(laserlines_VERSION "0.0.0")
-set(laserlines_BUILD_DEPENDS "roscpp" "std_msgs")
-set(laserlines_RUN_DEPENDS "roscpp" "std_msgs")
-set(laserlines_BUILDTOOL_DEPENDS "catkin")
