@@ -5,6 +5,9 @@
 #include <opencv2/highgui/highgui.hpp>
 #include <opencv2/imgproc/imgproc.hpp>
 
+// ROS includes
+#include <laserlines/LaserMsg.h>
+
 
 using namespace std;
 using namespace cv;
@@ -61,6 +64,8 @@ int main(int argc, char *argv[])
     Mat bwImg;      // binary image
     Mat cdst;       // final image
     Mat cannyImg;
+    Mat greenImg;
+    Mat HSVImg;
     
 
 
@@ -80,7 +85,6 @@ int main(int argc, char *argv[])
     
     Mat background = Mat(height, width, IPL_DEPTH_8U,3);
     Mat openrov = Mat(86,60,IPL_DEPTH_8U,3);
-    
    
     
     
@@ -88,6 +92,7 @@ int main(int argc, char *argv[])
     namedWindow("Laser Points", CV_WINDOW_AUTOSIZE);
     namedWindow("True Image",CV_WINDOW_AUTOSIZE);
     namedWindow("Blurred Image",CV_WINDOW_AUTOSIZE);
+    namedWindow("Green Image", CV_WINDOW_AUTOSIZE);
     
     
     
@@ -114,16 +119,22 @@ int main(int argc, char *argv[])
         openrov.copyTo(destinationROI);
         
         //create a single channel 1 byte image (i.e. gray-level image)
-        grayImg = Mat(height, width, IPL_DEPTH_8U, 1 );
+/*        grayImg = Mat(height, width, IPL_DEPTH_8U, 1 );
         cvtColor( newImg, grayImg, CV_BGR2GRAY );
+*/
+        // Convert image to HSV
+        greenImg = Mat(height, width, IPL_DEPTH_8U, 3);
+        HSVImg = Mat(height, width, IPL_DEPTH_8U, 3);
+        cvtColor(newImg, HSVImg, CV_BGR2HSV);
+        inRange(HSVImg, Scalar(80/2,100,100), Scalar(140/2,255,255), greenImg);
         
         // Invert image
         invImg = Mat(height, width, IPL_DEPTH_8U, 1 );
-        bitwise_not(grayImg,invImg);
+        bitwise_not(greenImg,invImg);
         
         // flip image
         blurImg = Mat(height, width, IPL_DEPTH_8U, 1 );
-        GaussianBlur(invImg, blurImg, Size(3,3),2,2);
+        GaussianBlur(greenImg, blurImg, Size(3,3),2,2);
         
         
         // Edge detect
@@ -209,6 +220,7 @@ int main(int argc, char *argv[])
         imshow("Blurred Image", blurImg);
         imshow("Hough Lines", cdst);
         imshow("Laser Points", background);
+        imshow("Green Image", greenImg);
         
         char c = cvWaitKey(33); // press escape to quit
         if( c == 27 ) break;
