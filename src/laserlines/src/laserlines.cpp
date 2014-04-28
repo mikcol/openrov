@@ -26,7 +26,7 @@ int main(int argc, char **argv)
 
   // OpenCV
   Mat img;
-
+  img = imread("")
 
 
   while (ros::ok())
