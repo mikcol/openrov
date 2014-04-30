@@ -47,7 +47,6 @@ find_package(OpenCV REQUIRED)
  add_message_files(
    FILES
    LaserMsg.msg
-   Num.msg
 #   Message1.msg
 #   Message2.msg
  )
@@ -85,7 +84,7 @@ catkin_package(
 #  INCLUDE_DIRS include
 #  LIBRARIES laserlines
 #  CATKIN_DEPENDS roscpp std_msgs
-  DEPENDS opencv
+  DEPENDS opencv message_runtime
 )
 
 ###########
