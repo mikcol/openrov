@@ -10,7 +10,7 @@
 using namespace cv;
 using namespace std;
 
-Mat newImg;     // original image
+Mat img;     // original image
 Mat grayImg;    // gray image for the conversion of the original image
 Mat blurImg;    // gray flipped image
 Mat invImg;     // Inverted image
@@ -47,58 +47,40 @@ int calc_dist(Point center, int height){
 	return dist;
 };
 
-Point calc_2d(int d,int n_rois, int j){
-
-	float res = 90/n_rois;
-	Point p_new;
-	float alpha = (45-j*res) * CV_PI/180; // (60 - j* degree)*Pi/180
-
-	p_new.x = d*sin(alpha);
-	cout << "p_new.x = " << p_new.x << ", j =  " << j << ", alpha: " << alpha << endl;
-	p_new.y = -d;
-
-	return p_new;
+void init_images(int width, int height){
+	HSVImg = Mat(height, width, IPL_DEPTH_8U, 3);
+	greenImg = Mat(height, width, IPL_DEPTH_8U, 3);
+	invImg = Mat(height, width, IPL_DEPTH_8U, 1 );
+	blurImg = Mat(height, width, IPL_DEPTH_8U, 1 );
+	bwImg = Mat(height, width, IPL_DEPTH_8U, 1 );
 };
 
-
-
-laserlines::LaserMsg find_ranges(Mat newImg){
+laserlines::LaserMsg find_ranges(Mat& newImg,int width, int height){
 
 	laserlines::LaserMsg msg;
 
-	// Set frame size down from 1080p to 640*480
-	Size s = newImg.size();
-	int height = s.height;
-	int width = s.width;
 
-	int d_width = 640;
-	int d_height = 480;
 	//capture.set(CV_CAP_PROP_FRAME_WIDTH, width);
 	//capture.set(CV_CAP_PROP_FRAME_HEIGHT, height);
 
 	cv::Rect roi( cv::Point( 640/2-60/2, 480/2-86/2 ), cv::Size( 60, 86 ));
 
 	// Convert image to HSV
-	HSVImg = Mat(height, width, IPL_DEPTH_8U, 3);
 	cvtColor(newImg, HSVImg, CV_BGR2HSV);
 
 	// Find greens in image
-	greenImg = Mat(height, width, IPL_DEPTH_8U, 3);
 	inRange(HSVImg, Scalar(80/2,100,100), Scalar(140/2,255,255), greenImg);
 
 	// Invert image
-	invImg = Mat(height, width, IPL_DEPTH_8U, 1 );
 	bitwise_not(greenImg,invImg);
 
 	// flip image
-	blurImg = Mat(height, width, IPL_DEPTH_8U, 1 );
 	GaussianBlur(greenImg, blurImg, Size(3,3),2,2);
 
 	// Edge detect
 	Canny(blurImg, cannyImg, 50, 300);
 
 	// Create Binary image with a threshold value of 128
-	bwImg = Mat(height, width, IPL_DEPTH_8U, 1 );
 	threshold(cannyImg, bwImg, 128, 255.0, THRESH_BINARY);
 	cvtColor(bwImg, cdst, CV_GRAY2BGR);
 	
@@ -145,6 +127,8 @@ laserlines::LaserMsg find_ranges(Mat newImg){
 		msg.ranges_bottom[j] = bottom_dist;
 		//ROS_INFO("set all the distances");
 	}
+	msg.angle_increment = 6;
+	msg.n_rois = 10;
 	return msg;
 }
 
@@ -163,9 +147,13 @@ int main(int argc, char **argv)
 	// Set update rate in Hz
 	ros::Rate loop_rate(1);
 
-	// OpenCV
-	Mat img;
+	// Load image into img
 	img = imread("/home/nicholas/openrov/src/laserlines/resources/laser_lines.png");
+
+	// Set frame size down from 1080p to 640*480
+	Size s = img.size();
+	init_images(s.width,s.height);
+
 	if(img.data){
 		while (ros::ok())
 		{
@@ -173,7 +161,7 @@ int main(int argc, char **argv)
 			laserlines::LaserMsg msg;
 
 			// fill msg with data
-			msg = find_ranges(img);
+			msg = find_ranges(img,s.width,s.height);
 
 		//	ROS_INFO("top_ranges: %d", msg.ranges_top[0]);
 		//	ROS_INFO("bottom_ranges: %d",msg.ranges_bottom[0]);

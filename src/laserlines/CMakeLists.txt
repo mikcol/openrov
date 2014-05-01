@@ -105,7 +105,7 @@ target_link_libraries(laserlines ${catkin_LIBRARIES} ${OpenCV_LIBRARIES})
 #target_link_libraries(laserlines ${OpenCV_LIBRARIES})
 
 add_executable(laserlistener src/laserlistener.cpp)
-target_link_libraries(laserlistener ${catkin_LIBRARIES})
+target_link_libraries(laserlistener ${catkin_LIBRARIES} ${OpenCV_LIBRARIES})
 
 ## Declare a cpp library
 # add_library(laserlines
