@@ -140,10 +140,10 @@ laserlines::LaserMsg find_ranges(Mat newImg){
 		int top_dist = calc_dist(top_center,height);
 		int bottom_dist = calc_dist(Point(bottom_center.x,height-bottom_center.y), height);
 		//ROS_INFO("Calculated all the distances as top: %d, bot: %d",top_dist,bottom_dist);
-		ROS_INFO("Calculated all the distances as top");
+	//	ROS_INFO("Calculated all the distances as top");
 		msg.ranges_top[j] = top_dist;
 		msg.ranges_bottom[j] = bottom_dist;
-		ROS_INFO("set all the distances");
+		//ROS_INFO("set all the distances");
 	}
 	return msg;
 }
@@ -151,7 +151,6 @@ laserlines::LaserMsg find_ranges(Mat newImg){
 
 int main(int argc, char **argv)
 {
-	ROS_INFO("Started the program");
 	// init ROS node for the roscore
 	ros::init(argc, argv, "talker");
 
@@ -163,23 +162,21 @@ int main(int argc, char **argv)
 
 	// Set update rate in Hz
 	ros::Rate loop_rate(1);
-	ROS_INFO("Trying to load the image");
+
 	// OpenCV
 	Mat img;
 	img = imread("/home/nicholas/openrov/src/laserlines/resources/laser_lines.png");
 	if(img.data){
-		ROS_INFO("Did load the image");
 		while (ros::ok())
 		{
-			ROS_INFO("Entered the while loop");
 			// Create msg
 			laserlines::LaserMsg msg;
-			ROS_INFO("Created a LaserMsg Msg");
+
 			// fill msg with data
 			msg = find_ranges(img);
 
-			ROS_INFO("top_ranges: %d", msg.ranges_top[0]);
-			ROS_INFO("bottom_ranges: %d",msg.ranges_bottom[0]);
+		//	ROS_INFO("top_ranges: %d", msg.ranges_top[0]);
+		//	ROS_INFO("bottom_ranges: %d",msg.ranges_bottom[0]);
 			// Publish data
 			chatter_pub.publish(msg);
 

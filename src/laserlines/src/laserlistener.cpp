@@ -4,7 +4,8 @@
 
 void chatterCallback(const laserlines::LaserMsg msg)
 {
-  ROS_INFO("I heard: [%f]", msg.angle_max);
+  ROS_INFO("Ranges_top: [%d]", msg.ranges_top);
+  ROS_INFO("Ranges_bottom: [%d]",msg.ranges_bottom);
 }
 
 int main(int argc, char **argv)
