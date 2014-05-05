@@ -21,10 +21,9 @@ Mat greenImg;
 Mat HSVImg;
 
 
-int n_rois = 10;
+//int n_rois = 10;
 int n_rois_max = 50;
 int n_rois_min = 10;
-int roi_slider;
 int roi_height ;
 float x_roi,y_roi,width_roi;
 
@@ -55,18 +54,21 @@ void init_images(int width, int height){
 	bwImg = Mat(height, width, IPL_DEPTH_8U, 1 );
 };
 
-laserlines::LaserMsg find_ranges(Mat& newImg,int width, int height){
+//laserlines::LaserMsg find_ranges(Mat& newImg,int width, int height){
+void find_ranges(laserlines::LaserMsg *msg){
 
-	laserlines::LaserMsg msg;
-
-
+	int height = msg->frame_height;
+	int width = msg->frame_width;
+	int32_t top_dists[msg->n_rois];
+	int32_t bottom_dists[msg->n_rois];
+	img = imread("/home/nicholas/openrov/src/laserlines/resources/laser_lines.png");
 	//capture.set(CV_CAP_PROP_FRAME_WIDTH, width);
 	//capture.set(CV_CAP_PROP_FRAME_HEIGHT, height);
 
 	cv::Rect roi( cv::Point( 640/2-60/2, 480/2-86/2 ), cv::Size( 60, 86 ));
 
 	// Convert image to HSV
-	cvtColor(newImg, HSVImg, CV_BGR2HSV);
+	cvtColor(img, HSVImg, CV_BGR2HSV);
 
 	// Find greens in image
 	inRange(HSVImg, Scalar(80/2,100,100), Scalar(140/2,255,255), greenImg);
@@ -84,11 +86,11 @@ laserlines::LaserMsg find_ranges(Mat& newImg,int width, int height){
 	threshold(cannyImg, bwImg, 128, 255.0, THRESH_BINARY);
 	cvtColor(bwImg, cdst, CV_GRAY2BGR);
 	
-	for (int j = 0; j < n_rois; j++) {
+	for (int j = 0; j < msg->n_rois; j++) {
 
 		// Set parameters for ROI
 		roi_height = height/2;
-		width_roi = width/n_rois;
+		width_roi = width/msg->n_rois;
 		x_roi =j*width_roi;
 
 		// Set and draw region of interest (TOP)
@@ -102,8 +104,8 @@ laserlines::LaserMsg find_ranges(Mat& newImg,int width, int height){
 
 		// Find lines
 		vector<Vec4i> top_lines,bottom_lines;
-		HoughLinesP(top_roi, top_lines, 1, CV_PI/180, 5, (int)width/n_rois/3, 5 );
-		HoughLinesP(bottom_roi, bottom_lines, 1, CV_PI/180, 5, (int)width/n_rois/3, 5 );
+		HoughLinesP(top_roi, top_lines, 1, CV_PI/180, 5, (int)width/msg->n_rois/3, 5 );
+		HoughLinesP(bottom_roi, bottom_lines, 1, CV_PI/180, 5, (int)width/msg->n_rois/3, 5 );
 
 		// Find the center of lines
 		Point top_center,bottom_center;
@@ -119,17 +121,11 @@ laserlines::LaserMsg find_ranges(Mat& newImg,int width, int height){
 		}
 
 		// Calculate the distance
-		int top_dist = calc_dist(top_center,height);
-		int bottom_dist = calc_dist(Point(bottom_center.x,height-bottom_center.y), height);
-		//ROS_INFO("Calculated all the distances as top: %d, bot: %d",top_dist,bottom_dist);
-	//	ROS_INFO("Calculated all the distances as top");
-		msg.ranges_top[j] = top_dist;
-		msg.ranges_bottom[j] = bottom_dist;
-		//ROS_INFO("set all the distances");
+		top_dists[j] = calc_dist(top_center,height);
+		bottom_dists[j] = calc_dist(Point(bottom_center.x,height-bottom_center.y), height);
 	}
-	msg.angle_increment = 6;
-	msg.n_rois = 10;
-	return msg;
+	msg->ranges_top.assign(top_dists,top_dists+msg->n_rois);
+	msg->ranges_bottom.assign(bottom_dists,bottom_dists+msg->n_rois);
 }
 
 
@@ -147,30 +143,22 @@ int main(int argc, char **argv)
 	// Set update rate in Hz
 	ros::Rate loop_rate(1);
 
-	// Load image into img
-	img = imread("/home/nicholas/openrov/src/laserlines/resources/laser_lines.png");
-
 	// Set frame size down from 1080p to 640*480
 	Size s = img.size();
 	init_images(s.width,s.height);
 
-	if(img.data){
-		while (ros::ok())
-		{
-			// Create msg
-			laserlines::LaserMsg msg;
+	while (ros::ok())
+	{
+		// Create msg
+		laserlines::LaserMsg msg;
 
-			// fill msg with data
-			msg = find_ranges(img,s.width,s.height);
+		// fill msg with data
+		find_ranges(&msg);
 
-		//	ROS_INFO("top_ranges: %d", msg.ranges_top[0]);
-		//	ROS_INFO("bottom_ranges: %d",msg.ranges_bottom[0]);
-			// Publish data
-			chatter_pub.publish(msg);
+		// Publish data
+		chatter_pub.publish(msg);
 
-			ros::spinOnce();
-			loop_rate.sleep();
-		}
+		ros::spinOnce();
+		loop_rate.sleep();
 	}
-	else return 0;
 }

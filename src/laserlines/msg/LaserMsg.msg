@@ -2,6 +2,8 @@ Header header
 float32 angle_min
 float32 angle_max
 float32 angle_increment
-int32[10] ranges_top
-int32[10] ranges_bottom
-int32 n_rois
+int32[] ranges_top
+int32[] ranges_bottom
+int32 n_rois=21
+int32 frame_height=480
+int32 frame_width=640
