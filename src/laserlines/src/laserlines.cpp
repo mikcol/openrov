@@ -123,6 +123,7 @@ void find_ranges(laserlines::LaserMsg *msg){
 		// Calculate the distance
 		top_dists[j] = calc_dist(top_center,height);
 		bottom_dists[j] = calc_dist(Point(bottom_center.x,height-bottom_center.y), height);
+		ROS_INFO("top_dist[%d]: %d",j,top_dists[j]);
 	}
 	msg->ranges_top.assign(top_dists,top_dists+msg->n_rois);
 	msg->ranges_bottom.assign(bottom_dists,bottom_dists+msg->n_rois);
