@@ -61,7 +61,7 @@ void find_ranges(laserlines::LaserMsg *msg){
 	int width = msg->frame_width;
 	int32_t top_dists[msg->n_rois];
 	int32_t bottom_dists[msg->n_rois];
-	img = imread("/home/nicholas/openrov/src/laserlines/resources/laser_lines.png");
+	img = imread("/home/ubuntu/openrov/src/laserlines/resources/laser_lines.png");
 	//capture.set(CV_CAP_PROP_FRAME_WIDTH, width);
 	//capture.set(CV_CAP_PROP_FRAME_HEIGHT, height);
 
