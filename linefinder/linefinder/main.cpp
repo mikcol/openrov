@@ -42,10 +42,11 @@ Point calc_2d(int d,int n_rois, int j){
 
     float res = 90/n_rois;
     Point p_new;
-    float alpha = (45-j*res) * CV_PI/180; // (60 - j* degree)*Pi/180
+    float alpha = ((90-res)/2-j*res) * CV_PI/180; // (60 - j* degree)*Pi/180
     
-    p_new.x = d*sin(alpha);
-    cout << "p_new.x = " << p_new.x << ", j =  " << j << ", alpha: " << alpha << endl;
+    p_new.x = d*sin(alpha)/cos(alpha);
+    cout << "p.x = " << p_new.x << ", j =  " << j << ", alpha: " << alpha << endl;
+    cout << "p.x = " << p_new.x/cos(alpha) << ", j =  " << j << ", alpha: " << alpha << endl;
     p_new.y = -d;
     
     return p_new;
@@ -88,8 +89,8 @@ int main(int argc, char *argv[])
     namedWindow("Hough Lines", CV_WINDOW_AUTOSIZE); // setup window
     namedWindow("Laser Points", CV_WINDOW_AUTOSIZE);
     namedWindow("True Image",CV_WINDOW_AUTOSIZE);
-    namedWindow("Blurred Image",CV_WINDOW_AUTOSIZE);
-    namedWindow("Green Image", CV_WINDOW_AUTOSIZE);
+   // namedWindow("Blurred Image",CV_WINDOW_AUTOSIZE);
+    //namedWindow("Green Image", CV_WINDOW_AUTOSIZE);
     
     
     
@@ -204,20 +205,20 @@ int main(int argc, char *argv[])
             
             Point p_top,p_bottom;
             p_top = calc_2d(top_dist, n_rois, j);
-            //p_bottom = calc_2d(bottom_dist, n_rois, j);
+            p_bottom = calc_2d(bottom_dist, n_rois, j);
             //cout << "(top.x,top.y): (" << p_top.x << "," << p_top.y << ")" << endl;
             //cout << "(bottom.x,bottom.y): (" << p_bottom.x << "," << p_bottom.y << ")" << endl;
             circle(background, Point(d_width/2-p_top.x , d_height/2 + p_top.y), 2, Scalar(0,0,255));
-            //circle(background, Point(d_width/2-p_bottom.x , d_height/2 + p_bottom.y), 2, Scalar(0,255,0));
+            circle(background, Point(d_width/2-p_bottom.x , d_height/2 + p_bottom.y), 2, Scalar(0,255,0));
             
         }
         
         // Draw image
         imshow("True Image", newImg);
-        imshow("Blurred Image", blurImg);
+       // imshow("Blurred Image", blurImg);
         imshow("Hough Lines", cdst);
         imshow("Laser Points", background);
-        imshow("Green Image", greenImg);
+        //imshow("Green Image", greenImg);
         
         char c = cvWaitKey(33); // press escape to quit
         if( c == 27 ) break;
