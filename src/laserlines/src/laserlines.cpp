@@ -11,24 +11,28 @@
 using namespace cv;
 using namespace std;
 
-Mat img;     // original image
+Mat img;     	// Camera img
 Mat grayImg;    // gray image for the conversion of the original image
 Mat blurImg;    // gray flipped image
 Mat invImg;     // Inverted image
 Mat bwImg;      // binary image
 Mat cdst;       // final image
-Mat cannyImg;
-Mat greenImg;
-Mat HSVImg;
+Mat cannyImg;  	// Canny edge image
+Mat greenImg;	// Image containing greens
+Mat HSVImg;	// HSV color image
 
 
-//int n_rois = 10;
-int n_rois_max = 50;
-int n_rois_min = 10;
-int roi_height ;
+int roi_height,img_height,img_width;
+int height,width;
 float x_roi,y_roi,width_roi;
+Rect region_of_interest;
+Mat top_roi;
+Mat bottom_roi;
+vector<Vec4i> top_lines,bottom_lines;
+Point top_center,bottom_center;
 
-
+// Set the video frame grabber
+VideoCapture capture(1); // capture from video device (Webcam)
 
 // Finds center of line
 int find_center(vector<Vec4i> lines){
@@ -53,24 +57,27 @@ void init_images(int width, int height){
 	invImg = Mat(height, width, IPL_DEPTH_8U, 1 );
 	blurImg = Mat(height, width, IPL_DEPTH_8U, 1 );
 	bwImg = Mat(height, width, IPL_DEPTH_8U, 1 );
+	cannyImg = Mat(height, width, IPL_DEPTH_8U, 1 );
 };
 
 //laserlines::LaserMsg find_ranges(Mat& newImg,int width, int height){
-void find_ranges(laserlines::LaserMsg *msg){
+int find_ranges(laserlines::LaserMsg *msg){
 
 
-//	int height = msg->frame_height;
-//	int width = msg->frame_width;
 
 	int32_t top_dists[msg->n_rois];
 	int32_t bottom_dists[msg->n_rois];
-	img = imread("/home/nicholas/openrov/src/laserlines/resources/laser_lines.png");
+	width = msg->frame_width;
+	height = msg->frame_height;
+	//img = imread("/home/nicholas/openrov/src/laserlines/resources/laser_lines.png");
 	
-	Size s = img.size();
-	int height = s.height;
-	int width = s.width;
-	//capture.set(CV_CAP_PROP_FRAME_WIDTH, width);
-	//capture.set(CV_CAP_PROP_FRAME_HEIGHT, height);
+	capture.set(CV_CAP_PROP_FRAME_WIDTH, width);
+	capture.set(CV_CAP_PROP_FRAME_HEIGHT, height);
+        // Check if Camera frame is grabbed
+	if (!(capture.read(img))) {
+		std::cout << "Cannot find image" << std::endl;
+		return -1;
+	}
 
 	// Convert image to HSV
 	cvtColor(img, HSVImg, CV_BGR2HSV);
@@ -99,21 +106,19 @@ void find_ranges(laserlines::LaserMsg *msg){
 		x_roi =j*width_roi;
 
 		// Set and draw region of interest (TOP)
-		Rect region_of_interest = Rect(x_roi, 0, width_roi, roi_height );
-		Mat top_roi = bwImg(region_of_interest);
+		region_of_interest = Rect(x_roi, 0, width_roi, roi_height );
+		top_roi = bwImg(region_of_interest);
 		rectangle(cdst, region_of_interest, Scalar(0,0,255), 1, 8, 0);
 		// (BOTTOM)
 		region_of_interest = Rect(x_roi, roi_height, width_roi, roi_height );
-		Mat bottom_roi = bwImg(region_of_interest);
+		bottom_roi = bwImg(region_of_interest);
 		rectangle(cdst, region_of_interest, Scalar(0,255,255), 1, 8, 0);
 
 		// Find lines
-		vector<Vec4i> top_lines,bottom_lines;
 		HoughLinesP(top_roi, top_lines, 1, CV_PI/180, 5, (int)width/msg->n_rois/3, 5 );
 		HoughLinesP(bottom_roi, bottom_lines, 1, CV_PI/180, 5, (int)width/msg->n_rois/3, 5 );
 
 		// Find the center of lines
-		Point top_center,bottom_center;
 		try {
 			top_center = Point(x_roi+width_roi/2 , find_center(top_lines) );
 		} catch (Point top_center) {
@@ -150,6 +155,7 @@ void find_ranges(laserlines::LaserMsg *msg){
 	}
 	msg->ranges_top.assign(top_dists,top_dists+msg->n_rois);
 	msg->ranges_bottom.assign(bottom_dists,bottom_dists+msg->n_rois);
+	return 0;
 }
 
 
