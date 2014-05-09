@@ -7,6 +7,7 @@
 #include "std_msgs/String.h"
 #include "laserlines/LaserMsg.h"
 #include <sstream>
+#include <string>
 using namespace cv;
 using namespace std;
 
@@ -57,15 +58,19 @@ void init_images(int width, int height){
 //laserlines::LaserMsg find_ranges(Mat& newImg,int width, int height){
 void find_ranges(laserlines::LaserMsg *msg){
 
-	int height = msg->frame_height;
-	int width = msg->frame_width;
+
+//	int height = msg->frame_height;
+//	int width = msg->frame_width;
+
 	int32_t top_dists[msg->n_rois];
 	int32_t bottom_dists[msg->n_rois];
-	img = imread("/home/ubuntu/openrov/src/laserlines/resources/laser_lines.png");
+	img = imread("/home/nicholas/openrov/src/laserlines/resources/laser_lines.png");
+	
+	Size s = img.size();
+	int height = s.height;
+	int width = s.width;
 	//capture.set(CV_CAP_PROP_FRAME_WIDTH, width);
 	//capture.set(CV_CAP_PROP_FRAME_HEIGHT, height);
-
-	cv::Rect roi( cv::Point( 640/2-60/2, 480/2-86/2 ), cv::Size( 60, 86 ));
 
 	// Convert image to HSV
 	cvtColor(img, HSVImg, CV_BGR2HSV);
@@ -98,7 +103,7 @@ void find_ranges(laserlines::LaserMsg *msg){
 		Mat top_roi = bwImg(region_of_interest);
 		rectangle(cdst, region_of_interest, Scalar(0,0,255), 1, 8, 0);
 		// (BOTTOM)
-		region_of_interest = Rect(x_roi, height/2, width_roi, roi_height );
+		region_of_interest = Rect(x_roi, roi_height, width_roi, roi_height );
 		Mat bottom_roi = bwImg(region_of_interest);
 		rectangle(cdst, region_of_interest, Scalar(0,255,255), 1, 8, 0);
 
@@ -123,7 +128,25 @@ void find_ranges(laserlines::LaserMsg *msg){
 		// Calculate the distance
 		top_dists[j] = calc_dist(top_center,height);
 		bottom_dists[j] = calc_dist(Point(bottom_center.x,height-bottom_center.y), height);
-		ROS_INFO("top_dist[%d]: %d",j,top_dists[j]);
+
+		// Draw Houghlines
+		if (top_lines.data()) {
+			line( cdst, Point(top_lines[0][0]+x_roi, top_lines[0][1]),
+					Point(top_lines[0][2]+x_roi, top_lines[0][3]), Scalar(0,0,255), 3, 8 );
+		}
+		if (bottom_lines.data()) {
+			line( cdst, Point(bottom_lines[0][0]+x_roi, bottom_lines[0][1]+roi_height),
+					Point(bottom_lines[0][2]+x_roi, bottom_lines[0][3]+roi_height), Scalar(0,0,255), 3, 8 );
+		}
+
+		// Draw Center of lines
+		circle(cdst, top_center, 3, Scalar(0,255,0),2);
+		circle(cdst, bottom_center , 3, Scalar(0,255,0),2);
+		line(cdst, top_center, Point(top_center.x, roi_height), Scalar(0,255,255),1,8);
+		line(cdst, bottom_center, Point(bottom_center.x, roi_height), Scalar(0,0,255),1);
+
+		imshow("Hough Lines",cdst);
+		waitKey(30);
 	}
 	msg->ranges_top.assign(top_dists,top_dists+msg->n_rois);
 	msg->ranges_bottom.assign(bottom_dists,bottom_dists+msg->n_rois);
@@ -144,14 +167,14 @@ int main(int argc, char **argv)
 	// Set update rate in Hz
 	ros::Rate loop_rate(1);
 
+	// Create msg
+	laserlines::LaserMsg msg;
+
 	// Set frame size down from 1080p to 640*480
-	Size s = img.size();
-	init_images(s.width,s.height);
+	init_images(msg.frame_width,msg.frame_height);
 
 	while (ros::ok())
 	{
-		// Create msg
-		laserlines::LaserMsg msg;
 
 		// fill msg with data
 		find_ranges(&msg);
