@@ -178,6 +178,9 @@ int main(int argc, char **argv)
 
 	// Set frame size down from 1080p to 640*480
 	init_images(msg.frame_width,msg.frame_height);
+	cout << "integration time: " << capture.get(CV_CAP_PROP_EXPOSURE) << endl;
+	cout << "FPS: " << capture.get(CV_CAP_PROP_FPS) << endl;
+	capture.set(CV_CAP_PROP_EXPOSURE,100);
 
 	while (ros::ok())
 	{
