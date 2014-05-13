@@ -45,7 +45,7 @@ void calc_2d(const laserlines::LaserMsg msg){
 		p_bottom.x = msg.ranges_bottom[i]*sin(alpha)/cos(alpha);
 		p_bottom.y = -msg.ranges_bottom[i];
 
-		circle(background, Point(msg.frame_width/2-p_top.x , msg.frame_height/2 + p_top.y), 2, Scalar(0,0,255));
+		circle(background, Point(msg.frame_width/2-p_top.x , msg.frame_height/2 + p_top.y), 2, Scalar(0,0,0));
 		circle(background, Point(msg.frame_width/2-p_bottom.x , msg.frame_height/2 + p_bottom.y), 2, Scalar(255,255,0));
 
 
