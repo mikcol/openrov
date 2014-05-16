@@ -27,20 +27,51 @@ using namespace cv;
 ************ GLOBAL VARIABLES ************
 *****************************************/
 
-//Mat background = Mat(640, 480, IPL_DEPTH_8U,3);
 Point p_top,p_bottom;
-float alpha;
-float angle_increment;
-int d_width;
-int d_height;
+float alpha,angle_increment;
+unsigned int i;
 // PCL Variables
 boost::shared_ptr<pcl::visualization::PCLVisualizer> viewer (new pcl::visualization::PCLVisualizer ("3D Viewer"));
 pcl::PointCloud<pcl::PointXYZRGB>::Ptr final_cloud 	(new pcl::PointCloud<pcl::PointXYZRGB>);
+
+// initialize temporary, inlier, bottom & top point clouds
+pcl::PointCloud<pcl::PointXYZ>::Ptr temp_cloud 		(new pcl::PointCloud<pcl::PointXYZ>);
+pcl::PointCloud<pcl::PointXYZRGB>::Ptr inlier_cloud 	(new pcl::PointCloud<pcl::PointXYZRGB>);
+pcl::PointCloud<pcl::PointXYZ>::Ptr top_cloud 		(new pcl::PointCloud<pcl::PointXYZ>);
+pcl::PointCloud<pcl::PointXYZ>::Ptr bottom_cloud 	(new pcl::PointCloud<pcl::PointXYZ>);
+
+// Initialize pointers to coefficients and inliers
+pcl::ModelCoefficients::Ptr coefficients 		(new pcl::ModelCoefficients);
+pcl::PointIndices::Ptr inliers 				(new pcl::PointIndices);
+
+// Create the filtering object
+pcl::ExtractIndices<pcl::PointXYZ> extract;
+
+// Create the segmentation object
+pcl::SACSegmentation<pcl::PointXYZ> seg;
+
 /*****************************************
 ********** Functions *********************
-ost::shared_ptr<pcl::visualization::PCLVisualizer> viewer (new pcl::visualization::PCLVisualizer ("3D Viewer"));
-
 *****************************************/
+
+void init(){
+	
+	// Mandatory
+	seg.setModelType (pcl::SACMODEL_PERPENDICULAR_PLANE);
+	
+	// Set method and threshold
+	seg.setMethodType (pcl::SAC_RANSAC);
+	seg.setDistanceThreshold (7);
+	seg.setInputCloud (temp_cloud);
+	
+	// Set the axis for which to search for perpendicular planes
+	Eigen::Vector3f axis = Eigen::Vector3f(0.0,1.0,0.0);    // here specify the plane i.e X or Y or Z
+	
+	// Set a allowed deviation angle from vector axis
+	seg.setEpsAngle((40*CV_PI)/180);
+	seg.setAxis(axis);
+}
+
 
 int
 //simpleVis (pcl::PointCloud<pcl::PointXYZRGB>::ConstPtr cloud)
@@ -69,19 +100,9 @@ simpleVis ()
 void
 find_planes(pcl::PointCloud<pcl::PointXYZ>::ConstPtr cloud_a, pcl::PointCloud<pcl::PointXYZ>::ConstPtr cloud_b){
 	
-	boost::shared_ptr<pcl::visualization::PCLVisualizer> viewer;
-
-	pcl::PointCloud<pcl::PointXYZ>::Ptr temp_cloud 		(new pcl::PointCloud<pcl::PointXYZ>);
-	pcl::PointCloud<pcl::PointXYZRGB>::Ptr inlier_cloud 	(new pcl::PointCloud<pcl::PointXYZRGB>);
-
-	pcl::ModelCoefficients::Ptr coefficients 		(new pcl::ModelCoefficients);
-	pcl::PointIndices::Ptr inliers 				(new pcl::PointIndices);
-
+	// Initialize
 	vector<pcl::PointIndices::Ptr> inline_vect;
 	vector<pcl::ModelCoefficients> coef_vect;
-
-	// Create the filtering object
-	pcl::ExtractIndices<pcl::PointXYZ> extract;
 
 	// Fill the final point cloud with data points	
 	*temp_cloud = *cloud_a;
@@ -89,33 +110,18 @@ find_planes(pcl::PointCloud<pcl::PointXYZ>::ConstPtr cloud_a, pcl::PointCloud<pc
 
 	int nr_points = temp_cloud->points.size();
 
-	// Create the segmentation object
-	pcl::SACSegmentation<pcl::PointXYZ> seg;
 	
 	// Optional
 //	seg.setOptimizeCoefficients (true);
 	
-	// Mandatory
-	seg.setModelType (pcl::SACMODEL_PERPENDICULAR_PLANE);
-	
-	// Set method and threshold
-	seg.setMethodType (pcl::SAC_RANSAC);
-	seg.setDistanceThreshold (7);
-	seg.setInputCloud (temp_cloud);
-	
-	// Set the axis for which to search for perpendicular planes
-	Eigen::Vector3f axis = Eigen::Vector3f(0.0,1.0,0.0);    // here specify the plane i.e X or Y or Z
-	
-	// Set a allowed deviation angle form vector axis
-	seg.setEpsAngle((40*CV_PI)/180);
-	seg.setAxis(axis);
 
 	// Counter for each plane found
-	unsigned int i = 1;
+	i = 1;
 
-	while(temp_cloud->points.size() > 0.1 * nr_points){
+	while(temp_cloud->points.size() > 0.2 * nr_points){
 		
 		ROS_INFO("Run no: %d, points in cloud: %d , nr_points: %d", i,temp_cloud->points.size(),nr_points);	
+		// Segment the planes and insert the coefficients and inliers in vectors
 		seg.segment (*inliers, *coefficients);
 		inline_vect.push_back(inliers); 
 		coef_vect.push_back(*coefficients);
@@ -138,17 +144,13 @@ find_planes(pcl::PointCloud<pcl::PointXYZ>::ConstPtr cloud_a, pcl::PointCloud<pc
 			inlier_cloud->points[j].g = 255*(i%2);
 			inlier_cloud->points[j].b = 255*(i%3);
 		}
-		//extract.setNegative(false);
-		//extract.filter(*inlier_cloud);
 		extract.setNegative(true);
 		extract.filter(*temp_cloud);
 	
-		//viewer->addPointCloud<pcl::PointXYZRGB> (inlier_cloud,"sample cloud");
-		ROS_INFO("Have ");
-//		pcl::copyPointCloud<pcl::PointXYZRGB>(*inlier_cloud, *inliers, *final_cloud);
 		*final_cloud += *inlier_cloud;
 		i++;
 	}
+
 	for(i = 0; i < coef_vect.size(); i++){
 		ROS_INFO("Coef[%d]: a:%f, b:%f ,c:%f, d:%f", i,coef_vect[i].values[0],coef_vect[i].values[1],coef_vect[i].values[2],coef_vect[i].values[3]);
 	}
@@ -157,10 +159,8 @@ find_planes(pcl::PointCloud<pcl::PointXYZ>::ConstPtr cloud_a, pcl::PointCloud<pc
  
 void calc_2d(const laserlines::LaserMsg msg){
 
-	// Initialize the point cloud
-	pcl::PointCloud<pcl::PointXYZ>::Ptr top_cloud 		(new pcl::PointCloud<pcl::PointXYZ>);
-	pcl::PointCloud<pcl::PointXYZ>::Ptr bottom_cloud 	(new pcl::PointCloud<pcl::PointXYZ>);
 
+	// Mandatory: Init he sizes of the point clouds
 	top_cloud->width    = msg.n_rois;
 	top_cloud->height   = 1;
 	top_cloud->resize (top_cloud->width * top_cloud->height);
@@ -169,9 +169,7 @@ void calc_2d(const laserlines::LaserMsg msg){
 	bottom_cloud->height = top_cloud->height;
 	bottom_cloud->resize (top_cloud->width * top_cloud->height);
 
-	// Set the background image to refresh the imag
-//	background = imread("/home/nicholas/openrov/src/laserlines/resources/openrov_background.png");
-
+	// Calculate the angle increment value between each measured point
 	angle_increment = msg.angle_span/msg.n_rois; // 90 deg / no_of_roi's
 
 	// Calculate new point in 2D space
@@ -180,24 +178,21 @@ void calc_2d(const laserlines::LaserMsg msg){
 		// Calculate the angle of the point in 2d space
 		alpha = ((90-angle_increment)/2-i*angle_increment) * CV_PI/180; // ((90-angle_res)/2 - j*angle_res)*Pi/180
 
-//		ROS_INFO("Alpha: %f, angle_inc: %f",alpha,angle_increment);
+		// Calculate the point (x_top,y_top)
 		p_top.x = msg.ranges_top[i]*sin(alpha)/cos(alpha);
 		p_top.y = msg.ranges_top[i];
-//		ROS_INFO("(p_top.x,p_top.y): (%d,%d)",p_top.x,p_top.y);
+
+		// Calculate the point (x_bottom,y_bottom)
 		p_bottom.x = msg.ranges_bottom[i]*sin(alpha)/cos(alpha);
 		p_bottom.y = msg.ranges_bottom[i];
 
+		// Insert points into clouds
 		top_cloud->points[i].x = p_top.x;
 		top_cloud->points[i].y = p_top.y;
 		top_cloud->points[i].z = 100;
-		
 		bottom_cloud->points[i].x = p_bottom.x;
 		bottom_cloud->points[i].y = p_bottom.y;
 		bottom_cloud->points[i].z = 0;
-
-//		circle(background, Point(msg.frame_width/2-p_top.x , msg.frame_height/2 + p_top.y), 2, Scalar(0,0,0));
-//		circle(background, Point(msg.frame_width/2-p_bottom.x , msg.frame_height/2 + p_bottom.y), 2, Scalar(255,255,0));
-
 	}
 	// Find the planes in the cloud;
 	find_planes(bottom_cloud,top_cloud);	
@@ -211,12 +206,15 @@ void chatterCallback(const laserlines::LaserMsg msg)
 
 int main(int argc, char **argv)
 {
+	// Start a thread with the 3D viewer
 	boost::thread viewer_thread(simpleVis);
+
+	init();
+	// Init ROS
 	ros::init(argc, argv, "listener");
 	ros::NodeHandle n;
 
-	namedWindow("Laser Points", CV_WINDOW_AUTOSIZE);
-
+	// Subscribe to the LaserMsg
 	ros::Subscriber sub = n.subscribe("chatter", 100, chatterCallback);
 
 	ros::spin();
