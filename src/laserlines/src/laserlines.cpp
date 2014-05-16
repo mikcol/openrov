@@ -31,8 +31,6 @@ Mat bottom_roi;
 vector<Vec4i> top_lines,bottom_lines;
 Point top_center,bottom_center;
 
-// Set the video frame grabber
-VideoCapture capture(1); // capture from video device (Webcam)
 
 // Finds center of line
 int find_center(vector<Vec4i> lines){
@@ -60,25 +58,20 @@ void init_images(int width, int height){
 	cannyImg = Mat(height, width, IPL_DEPTH_8U, 1 );
 };
 
-//laserlines::LaserMsg find_ranges(Mat& newImg,int width, int height){
 int find_ranges(laserlines::LaserMsg *msg){
 
 
 
 	int32_t top_dists[msg->n_rois];
 	int32_t bottom_dists[msg->n_rois];
-	width = msg->frame_width;
-	height = msg->frame_height;
-	//img = imread("/home/nicholas/openrov/src/laserlines/resources/laser_lines.png");
+	//width = msg->frame_width;
+	//height = msg->frame_height;
 	
-	capture.set(CV_CAP_PROP_FRAME_WIDTH, width);
-	capture.set(CV_CAP_PROP_FRAME_HEIGHT, height);
-        // Check if Camera frame is grabbed
-	if (!(capture.read(img))) {
-		std::cout << "Cannot find image" << std::endl;
-		return -1;
-	}
-
+	img = imread("/home/nicholas/openrov/src/laserlines/resources/laser_lines.png");
+	Size s = img.size();
+	width = s.width;
+	height = s.height;
+	if(!img.data){ return -1;}
 	// Convert image to HSV
 	cvtColor(img, HSVImg, CV_BGR2HSV);
 
@@ -178,9 +171,6 @@ int main(int argc, char **argv)
 
 	// Set frame size down from 1080p to 640*480
 	init_images(msg.frame_width,msg.frame_height);
-	cout << "integration time: " << capture.get(CV_CAP_PROP_EXPOSURE) << endl;
-	cout << "FPS: " << capture.get(CV_CAP_PROP_FPS) << endl;
-	capture.set(CV_CAP_PROP_EXPOSURE,100);
 
 	while (ros::ok())
 	{

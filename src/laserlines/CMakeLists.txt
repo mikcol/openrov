@@ -7,9 +7,11 @@ project(laserlines)
 find_package(catkin REQUIRED COMPONENTS
   roscpp
   std_msgs
+  pcl_ros
   message_generation
 )
 find_package(OpenCV REQUIRED)
+find_package(PCL 1.2 REQUIRED)
 ## System dependencies are found with CMake's conventions
 # find_package(Boost REQUIRED COMPONENTS system)
 
@@ -98,14 +100,16 @@ catkin_package(
 include_directories(
   ${catkin_INCLUDE_DIRS}
   ${OpenCV_INCLUDE_DIRS}
+  ${PCL_INCLUDE_DIRS}
 )
 
 add_executable(laserlines src/laserlines.cpp)
 target_link_libraries(laserlines ${catkin_LIBRARIES} ${OpenCV_LIBRARIES})
 
 add_executable(laserlistener src/laserlistener.cpp)
-target_link_libraries(laserlistener ${catkin_LIBRARIES} ${OpenCV_LIBRARIES})
-
+link_directories(${PCL_LIBRARY_DIRS})
+target_link_libraries(laserlistener  ${PCL_LIBRARIES}  ${catkin_LIBRARIES} ${OpenCV_LIBRARIES}  )
+# /usr/lib/*.so.5.8 /usr/lib/libvtkCommon.so.5.8
 ## Declare a cpp library
 # add_library(laserlines
 #   src/${PROJECT_NAME}/laserlines.cpp
