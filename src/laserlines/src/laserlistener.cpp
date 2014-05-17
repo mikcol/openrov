@@ -167,7 +167,7 @@ void calc_2d(const laserlines::LaserMsg msg){
 		ofstream outputfile;
 		outputfile.open("data.txt");
 		for(int i = 0; i < msg.n_rois;i++){
-			outputfile << msg.ranges_top[i] << "\t" << msg.ranges_bottom[i] << endl;
+			outputfile << msg.ranges_center[i] << "\t" << msg.ranges_top[i] << "\t" << msg.ranges_bottom[i] << endl;
 		}	
 		outputfile.close();
 	}
