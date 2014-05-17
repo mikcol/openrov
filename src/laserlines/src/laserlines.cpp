@@ -24,7 +24,7 @@ Mat HSVImg;	// HSV color image
 
 int roi_height,img_height,img_width;
 int height,width;
-float x_roi,y_roi,width_roi;
+float x_roi,y_roi,roi_width;
 Rect region_of_interest;
 Mat top_roi;
 Mat bottom_roi;
@@ -64,10 +64,11 @@ int find_ranges(laserlines::LaserMsg *msg){
 
 	int32_t top_dists[msg->n_rois];
 	int32_t bottom_dists[msg->n_rois];
+	int32_t x_center[msg->n_rois];
 	//width = msg->frame_width;
 	//height = msg->frame_height;
 	
-	img = imread("/home/nicholas/openrov/src/laserlines/resources/laser_lines.png");
+	img = imread("/home/nicholas/openrov/src/laserlines/resources/3_plane.png");
 	Size s = img.size();
 	width = s.width;
 	height = s.height;
@@ -95,15 +96,15 @@ int find_ranges(laserlines::LaserMsg *msg){
 
 		// Set parameters for ROI
 		roi_height = height/2;
-		width_roi = width/msg->n_rois;
-		x_roi =j*width_roi;
+		roi_width = width/msg->n_rois;
+		x_roi =j*roi_width;
 
 		// Set and draw region of interest (TOP)
-		region_of_interest = Rect(x_roi, 0, width_roi, roi_height );
+		region_of_interest = Rect(x_roi, 0, roi_width, roi_height );
 		top_roi = bwImg(region_of_interest);
 		rectangle(cdst, region_of_interest, Scalar(0,0,255), 1, 8, 0);
 		// (BOTTOM)
-		region_of_interest = Rect(x_roi, roi_height, width_roi, roi_height );
+		region_of_interest = Rect(x_roi, roi_height, roi_width, roi_height );
 		bottom_roi = bwImg(region_of_interest);
 		rectangle(cdst, region_of_interest, Scalar(0,255,255), 1, 8, 0);
 
@@ -113,17 +114,18 @@ int find_ranges(laserlines::LaserMsg *msg){
 
 		// Find the center of lines
 		try {
-			top_center = Point(x_roi+width_roi/2 , find_center(top_lines) );
+			top_center = Point(x_roi+roi_width/2 , find_center(top_lines) );
 		} catch (Point top_center) {
 			cout << "Exception Thrown: Top";
 		}
 		try {
-			bottom_center = Point(x_roi+width_roi/2 , find_center(bottom_lines) + roi_height);
+			bottom_center = Point(x_roi+roi_width/2 , find_center(bottom_lines) + roi_height);
 		} catch (Point bottom_center) {
 			cout << "Exception Thrown: Bottom";
 		}
 
 		// Calculate the distance
+		x_center[j] = -(x_roi+(roi_width-width)/2); 	// -(center_of_roi - center_of_image) : to flip the signage
 		top_dists[j] = calc_dist(top_center,height);
 		bottom_dists[j] = calc_dist(Point(bottom_center.x,height-bottom_center.y), height);
 
@@ -146,6 +148,7 @@ int find_ranges(laserlines::LaserMsg *msg){
 		imshow("Hough Lines",cdst);
 		waitKey(30);
 	}
+	msg->ranges_center.assign(x_center,x_center+msg->n_rois);
 	msg->ranges_top.assign(top_dists,top_dists+msg->n_rois);
 	msg->ranges_bottom.assign(bottom_dists,bottom_dists+msg->n_rois);
 	return 0;

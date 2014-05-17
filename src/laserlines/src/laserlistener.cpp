@@ -1,4 +1,5 @@
 #include <iostream>
+#include <fstream>
 #include <opencv2/opencv.hpp>
 #include <opencv2/core/core.hpp>
 #include <opencv2/highgui/highgui.hpp>
@@ -28,7 +29,7 @@ using namespace cv;
 *****************************************/
 
 Point p_top,p_bottom;
-float alpha,angle_increment;
+float alpha,angle_increment,alpha_top,alpha_bottom;
 unsigned int i;
 // PCL Variables
 boost::shared_ptr<pcl::visualization::PCLVisualizer> viewer (new pcl::visualization::PCLVisualizer ("3D Viewer"));
@@ -61,7 +62,7 @@ void init(){
 	
 	// Set method and threshold
 	seg.setMethodType (pcl::SAC_RANSAC);
-	seg.setDistanceThreshold (7);
+	seg.setDistanceThreshold (5);
 	seg.setInputCloud (temp_cloud);
 	
 	// Set the axis for which to search for perpendicular planes
@@ -84,12 +85,14 @@ simpleVis ()
 	viewer->addCoordinateSystem (50.0);
 	pcl::visualization::PointCloudColorHandlerRGBField<pcl::PointXYZRGB> rgb(final_cloud);
 	// Add cloud
+//	viewer->addPointCloud<pcl::PointXYZ> (temp_cloud, "sample cloud");
 	viewer->addPointCloud<pcl::PointXYZRGB> (final_cloud,rgb, "sample cloud");
 	viewer->setPointCloudRenderingProperties (pcl::visualization::PCL_VISUALIZER_POINT_SIZE, 3, "sample cloud");
 	viewer->initCameraParameters ();
 	while (!viewer->wasStopped ())
 	{
 		viewer->spinOnce (100);
+//		viewer->updatePointCloud<pcl::PointXYZ> (temp_cloud, "sample cloud");
 		viewer->updatePointCloud<pcl::PointXYZRGB> (final_cloud,rgb, "sample cloud");
 		boost::this_thread::sleep (boost::posix_time::microseconds (100000));
 	}
@@ -157,9 +160,17 @@ find_planes(pcl::PointCloud<pcl::PointXYZ>::ConstPtr cloud_a, pcl::PointCloud<pc
 }
 
  
+int first_run = 1;
 void calc_2d(const laserlines::LaserMsg msg){
-
-
+	
+	if(first_run){
+		ofstream outputfile;
+		outputfile.open("data.txt");
+		for(int i = 0; i < msg.n_rois;i++){
+			outputfile << msg.ranges_top[i] << "\t" << msg.ranges_bottom[i] << endl;
+		}	
+		outputfile.close();
+	}
 	// Mandatory: Init he sizes of the point clouds
 	top_cloud->width    = msg.n_rois;
 	top_cloud->height   = 1;
@@ -176,14 +187,16 @@ void calc_2d(const laserlines::LaserMsg msg){
 	for(int i = 0; i < msg.n_rois; i++){
 	
 		// Calculate the angle of the point in 2d space
-		alpha = ((90-angle_increment)/2-i*angle_increment) * CV_PI/180; // ((90-angle_res)/2 - j*angle_res)*Pi/180
+		alpha = ((msg.angle_span-angle_increment)/2-i*angle_increment) * CV_PI/180; // ((90-angle_res)/2 - j*angle_res)*Pi/180
+		//alpha_top = atan(msg.ranges_center[i]/msg.ranges_top[i]);
+		//alpha_bottom = atan(msg.ranges_center[i]/msg.ranges_bottom[i]);
 
 		// Calculate the point (x_top,y_top)
-		p_top.x = msg.ranges_top[i]*sin(alpha)/cos(alpha);
+		p_top.x = msg.ranges_top[i]*atan(alpha);
 		p_top.y = msg.ranges_top[i];
 
 		// Calculate the point (x_bottom,y_bottom)
-		p_bottom.x = msg.ranges_bottom[i]*sin(alpha)/cos(alpha);
+		p_bottom.x = msg.ranges_bottom[i]*atan(alpha);
 		p_bottom.y = msg.ranges_bottom[i];
 
 		// Insert points into clouds
