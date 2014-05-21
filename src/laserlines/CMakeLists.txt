@@ -5,7 +5,7 @@ project(laserlines)
 ## if COMPONENTS list like find_package(catkin REQUIRED COMPONENTS xyz)
 ## is used, also find other catkin packages
 find_package(catkin REQUIRED COMPONENTS
-  message_generation
+#  message_generation
   roscpp
   std_msgs
   pcl_ros
@@ -46,13 +46,13 @@ find_package(PCL 1.2 REQUIRED)
 ##   * add every package in MSG_DEP_SET to generate_messages(DEPENDENCIES ...)
 
 ## Generate messages in the 'msg' folder
- add_message_files(
-   FILES
-   LaserMsg.msg
-   Num.msg
+# add_message_files(
+#   FILES
+#   LaserMsg.msg
+#   Planes.msg
 #   Message1.msg
 #   Message2.msg
- )
+# )
 
 ## Generate services in the 'srv' folder
 # add_service_files(
@@ -69,10 +69,10 @@ find_package(PCL 1.2 REQUIRED)
 # )
 
 ## Generate added messages and services with any dependencies listed here
- generate_messages(
-   DEPENDENCIES
-   std_msgs
- )
+# generate_messages(
+#   DEPENDENCIES
+#   std_msgs
+# )
 
 ###################################
 ## catkin specific configuration ##
@@ -87,7 +87,7 @@ catkin_package(
 #  INCLUDE_DIRS include
 #  LIBRARIES laserlines
 #  CATKIN_DEPENDS roscpp std_msgs
-  DEPENDS opencv message_runtime
+  DEPENDS opencv #message_runtime
 )
 
 ###########
@@ -103,12 +103,17 @@ include_directories(
   ${PCL_INCLUDE_DIRS}
 )
 
-add_executable(laserlines src/laserlines.cpp)
-target_link_libraries(laserlines ${catkin_LIBRARIES} ${OpenCV_LIBRARIES})
+#add_executable(laserlines src/laserlines.cpp)
+#target_link_libraries(laserlines ${catkin_LIBRARIES} ${OpenCV_LIBRARIES})
 
-add_executable(laserlistener src/laserlistener.cpp)
+#add_executable(laserlistener src/laserlistener.cpp)
+#link_directories(${PCL_LIBRARY_DIRS})
+#target_link_libraries(laserlistener  ${PCL_LIBRARIES}  ${catkin_LIBRARIES} ${OpenCV_LIBRARIES}  )
+
+add_executable(find_planes src/find_planes.cpp)
 link_directories(${PCL_LIBRARY_DIRS})
-target_link_libraries(laserlistener  ${PCL_LIBRARIES}  ${catkin_LIBRARIES} ${OpenCV_LIBRARIES}  )
+target_link_libraries(find_planes  ${PCL_LIBRARIES}  ${catkin_LIBRARIES} ${OpenCV_LIBRARIES}  )
+
 # /usr/lib/*.so.5.8 /usr/lib/libvtkCommon.so.5.8
 ## Declare a cpp library
 # add_library(laserlines

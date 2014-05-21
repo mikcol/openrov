@@ -6,7 +6,7 @@
 #include <opencv2/imgproc/imgproc.hpp>
 #include "ros/ros.h"
 #include "std_msgs/String.h"
-#include "laserlines/LaserMsg.h"
+#include "OpenROVmessages/LaserMsg.h"
 
 #include <pcl/common/io.h>
 #include <pcl/console/parse.h>
@@ -45,6 +45,9 @@ pcl::PointCloud<pcl::PointXYZ>::Ptr bottom_cloud 	(new pcl::PointCloud<pcl::Poin
 pcl::ModelCoefficients::Ptr coefficients 		(new pcl::ModelCoefficients);
 pcl::PointIndices::Ptr inliers 				(new pcl::PointIndices);
 
+vector<pcl::PointIndices::Ptr> inline_vect;
+vector<pcl::ModelCoefficients> coef_vect;
+
 // Create the filtering object
 pcl::ExtractIndices<pcl::PointXYZ> extract;
 
@@ -66,10 +69,10 @@ void init(){
 	seg.setInputCloud (temp_cloud);
 	
 	// Set the axis for which to search for perpendicular planes
-	Eigen::Vector3f axis = Eigen::Vector3f(0.0,1.0,0.0);    // here specify the plane i.e X or Y or Z
+	Eigen::Vector3f axis = Eigen::Vector3f(1.0,1.0,0.0);    // here specify the plane i.e X or Y or Z
 	
 	// Set a allowed deviation angle from vector axis
-	seg.setEpsAngle((40*CV_PI)/180);
+	seg.setEpsAngle((60*CV_PI)/180);
 	seg.setAxis(axis);
 }
 
@@ -89,6 +92,15 @@ simpleVis ()
 	viewer->addPointCloud<pcl::PointXYZRGB> (final_cloud,rgb, "sample cloud");
 	viewer->setPointCloudRenderingProperties (pcl::visualization::PCL_VISUALIZER_POINT_SIZE, 3, "sample cloud");
 	viewer->initCameraParameters ();
+
+
+	// Add normal vectors from planes found
+/*
+	for(int i = 0; i < coef_vect.size(); i++){
+	pcl::visualization::PCLVisualizer::addArrow((0,0,0),(coef_vect[i].values[0],coef_vect[i].values[1],coef_vect[i].values[2]),255,0,0,"arrow",0);
+	}
+*/
+//	viewer->addPointCloudNormals(final_cloud,100,2.0,"sample cloud"); 	
 	while (!viewer->wasStopped ())
 	{
 		viewer->spinOnce (100);
@@ -103,9 +115,6 @@ simpleVis ()
 void
 find_planes(pcl::PointCloud<pcl::PointXYZ>::ConstPtr cloud_a, pcl::PointCloud<pcl::PointXYZ>::ConstPtr cloud_b){
 	
-	// Initialize
-	vector<pcl::PointIndices::Ptr> inline_vect;
-	vector<pcl::ModelCoefficients> coef_vect;
 
 	// Fill the final point cloud with data points	
 	*temp_cloud = *cloud_a;
@@ -188,24 +197,24 @@ void calc_2d(const laserlines::LaserMsg msg){
 	
 		// Calculate the angle of the point in 2d space
 		alpha = ((msg.angle_span-angle_increment)/2-i*angle_increment) * CV_PI/180; // ((90-angle_res)/2 - j*angle_res)*Pi/180
-		//alpha_top = atan(msg.ranges_center[i]/msg.ranges_top[i]);
-		//alpha_bottom = atan(msg.ranges_center[i]/msg.ranges_bottom[i]);
+		alpha_top = atan(msg.ranges_center[i]/msg.ranges_top[i]);
+		alpha_bottom = atan(msg.ranges_center[i]/msg.ranges_bottom[i]);
 
 		// Calculate the point (x_top,y_top)
 		p_top.x = msg.ranges_top[i]*atan(alpha);
-		p_top.y = msg.ranges_top[i];
+		p_top.y = -msg.ranges_top[i];
 
 		// Calculate the point (x_bottom,y_bottom)
 		p_bottom.x = msg.ranges_bottom[i]*atan(alpha);
-		p_bottom.y = msg.ranges_bottom[i];
+		p_bottom.y = -msg.ranges_bottom[i];
 
 		// Insert points into clouds
 		top_cloud->points[i].x = p_top.x;
 		top_cloud->points[i].y = p_top.y;
-		top_cloud->points[i].z = 100;
+		top_cloud->points[i].z = 50;
 		bottom_cloud->points[i].x = p_bottom.x;
 		bottom_cloud->points[i].y = p_bottom.y;
-		bottom_cloud->points[i].z = 0;
+		bottom_cloud->points[i].z = -50;
 	}
 	// Find the planes in the cloud;
 	find_planes(bottom_cloud,top_cloud);	
@@ -228,7 +237,7 @@ int main(int argc, char **argv)
 	ros::NodeHandle n;
 
 	// Subscribe to the LaserMsg
-	ros::Subscriber sub = n.subscribe("chatter", 100, chatterCallback);
+	ros::Subscriber sub = n.subscribe("laser", 100, chatterCallback);
 
 	ros::spin();
 

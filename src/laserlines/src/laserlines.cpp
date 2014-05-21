@@ -5,7 +5,7 @@
 #include <opencv2/imgproc/imgproc.hpp>
 #include "ros/ros.h"
 #include "std_msgs/String.h"
-#include "laserlines/LaserMsg.h"
+#include "OpenROVmessages/LaserMsg.h"
 #include <sstream>
 #include <string>
 using namespace cv;
@@ -50,12 +50,12 @@ int calc_dist(Point center, int height){
 };
 
 void init_images(int width, int height){
-	HSVImg = Mat(height, width, IPL_DEPTH_8U, 3);
-	greenImg = Mat(height, width, IPL_DEPTH_8U, 3);
-	invImg = Mat(height, width, IPL_DEPTH_8U, 1 );
-	blurImg = Mat(height, width, IPL_DEPTH_8U, 1 );
-	bwImg = Mat(height, width, IPL_DEPTH_8U, 1 );
-	cannyImg = Mat(height, width, IPL_DEPTH_8U, 1 );
+	HSVImg 		= Mat(height, width, IPL_DEPTH_8U, 3);
+	greenImg 	= Mat(height, width, IPL_DEPTH_8U, 3);
+	invImg 		= Mat(height, width, IPL_DEPTH_8U, 1);
+	blurImg 	= Mat(height, width, IPL_DEPTH_8U, 1);
+	bwImg 		= Mat(height, width, IPL_DEPTH_8U, 1);
+	cannyImg 	= Mat(height, width, IPL_DEPTH_8U, 1);
 };
 
 int find_ranges(laserlines::LaserMsg *msg){
@@ -65,19 +65,20 @@ int find_ranges(laserlines::LaserMsg *msg){
 	int32_t top_dists[msg->n_rois];
 	int32_t bottom_dists[msg->n_rois];
 	int32_t x_center[msg->n_rois];
-	//width = msg->frame_width;
-	//height = msg->frame_height;
+	width = msg->frame_width;
+	height = msg->frame_height;
 	
-	img = imread("/home/nicholas/openrov/src/laserlines/resources/3_plane.png");
-	Size s = img.size();
-	width = s.width;
-	height = s.height;
+	img = imread("/home/nicholas/openrov/src/laserlines/resources/focal_9238_3m.png");
+
+	// Check that image is loaded
 	if(!img.data){ return -1;}
+
 	// Convert image to HSV
 	cvtColor(img, HSVImg, CV_BGR2HSV);
 
 	// Find greens in image
-	inRange(HSVImg, Scalar(80/2,100,100), Scalar(140/2,255,255), greenImg);
+//	inRange(HSVImg, Scalar(80/2,100,100), Scalar(140/2,255,255), greenImg);
+	inRange(HSVImg, Scalar(5,100,100), Scalar(70,255,255), greenImg);
 
 	// Invert image
 	bitwise_not(greenImg,invImg);
@@ -89,7 +90,7 @@ int find_ranges(laserlines::LaserMsg *msg){
 	Canny(blurImg, cannyImg, 50, 300);
 
 	// Create Binary image with a threshold value of 128
-	threshold(cannyImg, bwImg, 128, 255.0, THRESH_BINARY);
+	threshold(cannyImg, bwImg, 1, 255.0, THRESH_BINARY);
 	cvtColor(bwImg, cdst, CV_GRAY2BGR);
 	
 	for (int j = 0; j < msg->n_rois; j++) {
@@ -126,8 +127,8 @@ int find_ranges(laserlines::LaserMsg *msg){
 
 		// Calculate the distance
 		x_center[j] = -(x_roi+(roi_width-width)/2); 	// -(center_of_roi - center_of_image) : to flip the signage
-		top_dists[j] = calc_dist(top_center,height);
-		bottom_dists[j] = calc_dist(Point(bottom_center.x,height-bottom_center.y), height);
+		top_dists[j] = height/2-top_center.y;
+		bottom_dists[j] = bottom_center.y - height/2;
 
 		// Draw Houghlines
 		if (top_lines.data()) {
@@ -158,13 +159,13 @@ int find_ranges(laserlines::LaserMsg *msg){
 int main(int argc, char **argv)
 {
 	// init ROS node for the roscore
-	ros::init(argc, argv, "talker");
+	ros::init(argc, argv, "Range_finder");
 
 	// create node
 	ros::NodeHandle n;
 
 	// create publisher of type <laserlines::LaserMsg>, with name "chatter"
-	ros::Publisher chatter_pub = n.advertise<laserlines::LaserMsg>("chatter", 100);
+	ros::Publisher chatter_pub = n.advertise<laserlines::LaserMsg>("laser", 100);
 
 	// Set update rate in Hz
 	ros::Rate loop_rate(1);
