@@ -31,6 +31,7 @@ using namespace cv;
 Point p_top,p_bottom;
 float alpha,angle_increment,alpha_top,alpha_bottom;
 unsigned int i;
+bool first_run = true;
 // PCL Variables
 boost::shared_ptr<pcl::visualization::PCLVisualizer> viewer (new pcl::visualization::PCLVisualizer ("3D Viewer"));
 pcl::PointCloud<pcl::PointXYZRGB>::Ptr final_cloud 	(new pcl::PointCloud<pcl::PointXYZRGB>);
@@ -58,14 +59,14 @@ pcl::SACSegmentation<pcl::PointXYZ> seg;
 ********** Functions *********************
 *****************************************/
 
-void init(){
+void init(const OpenROVmessages::LaserMsg msg){
 	
 	// Mandatory
 	seg.setModelType (pcl::SACMODEL_PERPENDICULAR_PLANE);
 	
 	// Set method and threshold
 	seg.setMethodType (pcl::SAC_RANSAC);
-	seg.setDistanceThreshold (5);
+	seg.setDistanceThreshold (msg.ransac_threshold);
 	seg.setInputCloud (temp_cloud);
 	
 	// Set the axis for which to search for perpendicular planes
@@ -130,7 +131,7 @@ find_planes(pcl::PointCloud<pcl::PointXYZ>::ConstPtr cloud_a, pcl::PointCloud<pc
 	// Counter for each plane found
 	i = 1;
 
-	while(temp_cloud->points.size() > 0.2 * nr_points){
+	while(temp_cloud->points.size() > 0.5 * nr_points){
 		
 		ROS_INFO("Run no: %d, points in cloud: %d , nr_points: %d", i,temp_cloud->points.size(),nr_points);	
 		// Segment the planes and insert the coefficients and inliers in vectors
@@ -169,8 +170,7 @@ find_planes(pcl::PointCloud<pcl::PointXYZ>::ConstPtr cloud_a, pcl::PointCloud<pc
 }
 
  
-int first_run = 1;
-void calc_2d(const laserlines::LaserMsg msg){
+void calc_2d(const OpenROVmessages::LaserMsg msg){
 	
 	if(first_run){
 		ofstream outputfile;
@@ -221,9 +221,14 @@ void calc_2d(const laserlines::LaserMsg msg){
 };
 
 // Callback function for the msg
-void chatterCallback(const laserlines::LaserMsg msg)
+void chatterCallback(const OpenROVmessages::LaserMsg msg)
 {
-	calc_2d(msg);
+	if(first_run){
+		init(msg);
+		first_run = false;
+	}
+	else
+		calc_2d(msg);
 }
 
 int main(int argc, char **argv)
@@ -231,7 +236,6 @@ int main(int argc, char **argv)
 	// Start a thread with the 3D viewer
 	boost::thread viewer_thread(simpleVis);
 
-	init();
 	// Init ROS
 	ros::init(argc, argv, "listener");
 	ros::NodeHandle n;

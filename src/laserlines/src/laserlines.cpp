@@ -58,7 +58,7 @@ void init_images(int width, int height){
 	cannyImg 	= Mat(height, width, IPL_DEPTH_8U, 1);
 };
 
-int find_ranges(laserlines::LaserMsg *msg){
+int find_ranges(OpenROVmessages::LaserMsg *msg){
 
 
 
@@ -83,7 +83,7 @@ int find_ranges(laserlines::LaserMsg *msg){
 	// Invert image
 	bitwise_not(greenImg,invImg);
 
-	// flip image
+	// Blur image
 	GaussianBlur(greenImg, blurImg, Size(3,3),2,2);
 
 	// Edge detect
@@ -165,13 +165,13 @@ int main(int argc, char **argv)
 	ros::NodeHandle n;
 
 	// create publisher of type <laserlines::LaserMsg>, with name "chatter"
-	ros::Publisher chatter_pub = n.advertise<laserlines::LaserMsg>("laser", 100);
+	ros::Publisher chatter_pub = n.advertise<OpenROVmessages::LaserMsg>("laser", 100);
 
 	// Set update rate in Hz
 	ros::Rate loop_rate(1);
 
 	// Create msg
-	laserlines::LaserMsg msg;
+	OpenROVmessages::LaserMsg msg;
 
 	// Set frame size down from 1080p to 640*480
 	init_images(msg.frame_width,msg.frame_height);
