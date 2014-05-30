@@ -68,7 +68,12 @@ int find_ranges(OpenROVmessages::LaserMsg *msg){
 	width = msg->frame_width;
 	height = msg->frame_height;
 	
-	img = imread("/home/nicholas/openrov/src/laserlines/resources/focal_9238_3m.png");
+	//img = imread("/home/nicholas/openrov/src/laserlines/resources/focal_9238_3m.png");
+	img = imread("/home/nicholas/openrov/src/laserlines/resources/laser_dist/0027.png");
+
+	Size s = img.size();
+	width = s.width;
+	height = s.height;
 
 	// Check that image is loaded
 	if(!img.data){ return -1;}
@@ -78,7 +83,7 @@ int find_ranges(OpenROVmessages::LaserMsg *msg){
 
 	// Find greens in image
 //	inRange(HSVImg, Scalar(80/2,100,100), Scalar(140/2,255,255), greenImg);
-	inRange(HSVImg, Scalar(5,100,100), Scalar(70,255,255), greenImg);
+	inRange(HSVImg, Scalar(5,10,10), Scalar(70,255,255), greenImg);
 
 	// Invert image
 	bitwise_not(greenImg,invImg);
