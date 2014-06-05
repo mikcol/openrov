@@ -66,7 +66,8 @@ void init(const OpenROVmessages::LaserMsg msg){
 	
 	// Set method and threshold
 	seg.setMethodType (pcl::SAC_RANSAC);
-	seg.setDistanceThreshold (msg.ransac_threshold);
+	//seg.setDistanceThreshold (msg.ransac_threshold);
+	seg.setDistanceThreshold (0.03);
 	seg.setInputCloud (temp_cloud);
 	
 	// Set the axis for which to search for perpendicular planes
@@ -86,7 +87,7 @@ simpleVis ()
 	// -----Open 3D viewer and add point cloud-----
 	// --------------------------------------------
 	viewer->setBackgroundColor (0, 0, 0);
-	viewer->addCoordinateSystem (50.0);
+	viewer->addCoordinateSystem (0.1);
 	pcl::visualization::PointCloudColorHandlerRGBField<pcl::PointXYZRGB> rgb(final_cloud);
 	// Add cloud
 //	viewer->addPointCloud<pcl::PointXYZ> (temp_cloud, "sample cloud");
@@ -131,7 +132,7 @@ find_planes(pcl::PointCloud<pcl::PointXYZ>::ConstPtr cloud_a, pcl::PointCloud<pc
 	// Counter for each plane found
 	i = 1;
 
-	while(temp_cloud->points.size() > 0.5 * nr_points){
+	while(temp_cloud->points.size() > 0.1 * nr_points && i < 7){
 		
 		ROS_INFO("Run no: %d, points in cloud: %d , nr_points: %d", i,temp_cloud->points.size(),nr_points);	
 		// Segment the planes and insert the coefficients and inliers in vectors
@@ -164,11 +165,14 @@ find_planes(pcl::PointCloud<pcl::PointXYZ>::ConstPtr cloud_a, pcl::PointCloud<pc
 		i++;
 	}
 
+	int size = coef_vect.size();
 	for(i = 0; i < coef_vect.size(); i++){
 		ROS_INFO("Coef[%d]: a:%f, b:%f ,c:%f, d:%f", i,coef_vect[i].values[0],coef_vect[i].values[1],coef_vect[i].values[2],coef_vect[i].values[3]);
 	}
+	for(i = 0; i < size; i++){
+		coef_vect.pop_back();
+	}
 }
-
  
 void calc_2d(const OpenROVmessages::LaserMsg msg){
 	
@@ -200,7 +204,31 @@ void calc_2d(const OpenROVmessages::LaserMsg msg){
 		alpha_top = atan(msg.ranges_center[i]/msg.ranges_top[i]);
 		alpha_bottom = atan(msg.ranges_center[i]/msg.ranges_bottom[i]);
 
-		// Calculate the point (x_top,y_top)
+		double x_f,y_f,z_w,y_w,x_w,focal_length,b;
+
+		focal_length = 0.009238;
+		b = 0.1;
+		x_f = 0.018/1080*msg.ranges_center[i];
+		y_f = 0.032/1920*msg.ranges_top[i];
+
+		x_w = b*focal_length/y_f;
+		y_w = x_w*x_f/focal_length;
+		z_w = 0.1;
+		top_cloud->points[i].x = x_w;
+		top_cloud->points[i].y = y_w;
+		top_cloud->points[i].z = z_w;
+
+		x_f = 0.018/1080*msg.ranges_center[i];
+		y_f = 0.032/1920*msg.ranges_bottom[i];
+
+		x_w = b*focal_length/y_f;
+		y_w = x_w*x_f/focal_length;
+		z_w = -0.1;
+		// Insert points into clouds
+		bottom_cloud->points[i].x = x_w;
+		bottom_cloud->points[i].y = y_w;
+		bottom_cloud->points[i].z = z_w;
+/*		// Calculate the point (x_top,y_top)
 		p_top.x = msg.ranges_top[i]*atan(alpha);
 		p_top.y = -msg.ranges_top[i];
 
@@ -215,7 +243,7 @@ void calc_2d(const OpenROVmessages::LaserMsg msg){
 		bottom_cloud->points[i].x = p_bottom.x;
 		bottom_cloud->points[i].y = p_bottom.y;
 		bottom_cloud->points[i].z = -50;
-	}
+*/	}
 	// Find the planes in the cloud;
 	find_planes(bottom_cloud,top_cloud);	
 };

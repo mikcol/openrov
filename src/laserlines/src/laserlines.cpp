@@ -69,7 +69,7 @@ int find_ranges(OpenROVmessages::LaserMsg *msg){
 	height = msg->frame_height;
 	
 	//img = imread("/home/nicholas/openrov/src/laserlines/resources/focal_9238_3m.png");
-	img = imread("/home/nicholas/openrov/src/laserlines/resources/laser_dist/0027.png");
+	//img = imread("/home/nicholas/openrov/src/laserlines/resources/laser_path/0001.png");
 
 	Size s = img.size();
 	width = s.width;
@@ -181,6 +181,7 @@ int main(int argc, char **argv)
 	// Set frame size down from 1080p to 640*480
 	init_images(msg.frame_width,msg.frame_height);
 
+	img = imread(argv[1]);
 	while (ros::ok())
 	{
 
