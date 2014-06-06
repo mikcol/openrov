@@ -26,6 +26,7 @@
 using namespace cv;
 using namespace std;
 
+
 Mat img;     	// Camera img
 Mat grayImg;    // gray image for the conversion of the original image
 Mat invImg;     // Inverted image
@@ -137,7 +138,6 @@ find_planes(int img_no, pcl::PointCloud<pcl::PointXYZ>::ConstPtr cloud_a, pcl::P
 
 	int nr_points = temp_cloud->points.size();
 
-	
 	// Optional
 	seg.setOptimizeCoefficients (true);
 	

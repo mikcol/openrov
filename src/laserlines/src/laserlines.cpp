@@ -184,7 +184,6 @@ int main(int argc, char **argv)
 	img = imread(argv[1]);
 	while (ros::ok())
 	{
-
 		// fill msg with data
 		find_ranges(&msg);
 
