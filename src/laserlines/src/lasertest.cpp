@@ -280,7 +280,7 @@ int main(int argc, char **argv)
 			sensor_height = 0.018;
 			
 			focal_length = 0.009238;
-			b = 0.1;
+			b = 0.166;
 			x_f = sensor_width/width*x_center;
 			y_f = sensor_height/height*top_dist;
 			
