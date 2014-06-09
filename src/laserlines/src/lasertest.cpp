@@ -208,6 +208,8 @@ int main(int argc, char **argv)
 		width = s.width;
 		height = s.height;
 
+		cout << "height, width" << height << width << endl;
+
 		init_images(width,height);
 		// Check that image is loaded
 		if(!img.data){ return -1;}
@@ -272,7 +274,7 @@ int main(int argc, char **argv)
 			bottom_cloud->height = top_cloud->height;
 			bottom_cloud->resize (top_cloud->width * top_cloud->height);
 
-			double x_f,y_f,z_w,y_w,x_w,focal_length,b,sensor_width,sensor_height;
+			double x_f,y_f,z_b,y_b,x_b,focal_length,b,sensor_width,sensor_height;
 
 			sensor_width = 0.032;
 			sensor_height = 0.018;
@@ -282,29 +284,32 @@ int main(int argc, char **argv)
 			x_f = sensor_width/width*x_center;
 			y_f = sensor_height/height*top_dist;
 			
-			z_w = 0.1;
-			x_w = b*focal_length/y_f;
-			y_w = x_w*x_f/focal_length;
+			x_b = b*focal_length/y_f;
+			y_b = x_b*x_f/focal_length;
+			z_b = 0.1;
 			
-			outputfile << x_w << "\t" << y_w << "\t" << z_w << "\t";
+			// Write world top sensor coordinates to ranges.txt
+			outputfile << x_b << "\t" << y_b << "\t" << z_b << "\t";
 
-			top_cloud->points[j].x = x_w;
-			top_cloud->points[j].y = y_w;
-			top_cloud->points[j].z = z_w;
+			top_cloud->points[j].x = x_b;
+			top_cloud->points[j].y = y_b;
+			top_cloud->points[j].z = z_b;
 			// Calculate the point (x_top,y_top)
 
 			x_f = sensor_width/width*x_center;
 			y_f = sensor_height/height*bottom_dist;
 			
-			z_w = -0.1;
-			x_w = b*focal_length/y_f;
-			y_w = x_w*x_f/focal_length;
+			x_b = b*focal_length/y_f;
+			y_b = x_b*x_f/focal_length;
+			z_b = -0.1;
 
-			outputfile << x_w << "\t" << y_w << "\t" << z_w << endl;
+			// Write world bottom sensor coordinates to ranges.txt
+			outputfile << x_b << "\t" << y_b << "\t" << z_b << endl;
+			
 			// Insert points into clouds
-			bottom_cloud->points[j].x = x_w;
-			bottom_cloud->points[j].y = y_w;
-			bottom_cloud->points[j].z = z_w;
+			bottom_cloud->points[j].x = x_b;
+			bottom_cloud->points[j].y = y_b;
+			bottom_cloud->points[j].z = z_b;
 		}
 		find_planes(img_no,top_cloud,bottom_cloud);
 	}
