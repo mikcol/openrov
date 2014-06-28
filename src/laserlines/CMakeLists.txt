@@ -106,6 +106,9 @@ include_directories(
 add_executable(laserlines src/laserlines.cpp)
 target_link_libraries(laserlines ${catkin_LIBRARIES} ${OpenCV_LIBRARIES})
 
+add_executable(capture_images src/capture_images.cpp)
+target_link_libraries(capture_images ${catkin_LIBRARIES} ${OpenCV_LIBRARIES})
+
 add_executable(laserlistener src/laserlistener.cpp)
 link_directories(${PCL_LIBRARY_DIRS})
 target_link_libraries(laserlistener  ${PCL_LIBRARIES}  ${catkin_LIBRARIES} ${OpenCV_LIBRARIES}  )

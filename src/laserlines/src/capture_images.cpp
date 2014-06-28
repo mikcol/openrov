@@ -16,7 +16,7 @@ int main(int argc, char **argv)
 {
 	VideoCapture capture(0);
 	Mat image;
-
+    
 	if (!capture.isOpened()) {
 		cout << "Error, did not open Camera" << endl;
 		return -1;	
