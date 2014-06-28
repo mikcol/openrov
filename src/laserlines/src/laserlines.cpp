@@ -32,6 +32,7 @@ Mat bottom_roi;
 vector<Vec4i> top_lines,bottom_lines;
 Point top_center,bottom_center;
 
+VideoCapture capture(0);
 
 // Finds center of line
 int find_center(vector<Vec4i> lines){
@@ -178,6 +179,10 @@ int find_ranges(OpenROVmessages::LaserMsg *msg){
 
 int main(int argc, char **argv)
 {
+	if (!capture.isOpened()) {
+		cout << "Error, did not open Camera" << endl;
+		return -1;	
+	}
 	// init ROS node for the roscore
 	ros::init(argc, argv, "Range_finder");
 
@@ -197,9 +202,14 @@ int main(int argc, char **argv)
 //	init_images(msg.frame_width,msg.frame_height);
 	init_images(1280,720);
 
-	img = imread(argv[1]);
+	//img = imread(argv[1]);
+	
+	
 	while (ros::ok())
 	{
+		// Capture image
+		capture >> img;
+
 		// fill msg with data
 		find_ranges(&msg);
 
