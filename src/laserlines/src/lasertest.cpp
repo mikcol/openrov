@@ -33,6 +33,8 @@ Mat invImg;     // Inverted image
 Mat bwImg;      // binary image
 Mat cdst;       // final image
 Mat cannyImg;  	// Canny edge image
+Mat errodeImg;
+Mat blurImg;
 
 Mat top_roi,bottom_roi;
 
@@ -109,6 +111,8 @@ void init_images(int width, int height){
 	invImg 		= Mat(height, width, IPL_DEPTH_8U, 1);
 	bwImg 		= Mat(height, width, IPL_DEPTH_8U, 1);
 	cannyImg 	= Mat(height, width, IPL_DEPTH_8U, 1);
+	errodeImg 	= Mat(height, width, IPL_DEPTH_8U, 1);
+	blurImg 	= Mat(height, width, IPL_DEPTH_8U, 1);
 };
 
 void
@@ -217,13 +221,25 @@ int main(int argc, char **argv)
 		// Invert image
 		bitwise_not(img,invImg);
 
-		// Edge detect
-		Canny(invImg, cannyImg, 50, 300);
+
+		// Blur image
+		GaussianBlur(invImg, blurImg, Size(3,3),2,2);
 
 		// Create Binary image with a threshold value of 128
-		threshold(cannyImg, bwImg, 1, 255.0, THRESH_BINARY);
+		threshold(blurImg, bwImg, 1, 255.0, THRESH_BINARY);
 		cvtColor(bwImg, cdst, CV_GRAY2BGR);
 
+		int erosion_size = 1; 
+		Mat element = getStructuringElement(cv::MORPH_CROSS,
+				cv::Size(2 * erosion_size + 1, 2 * erosion_size + 1),
+				cv::Point(erosion_size, erosion_size) );
+
+		erode(bwImg,errodeImg,element);
+
+
+
+		// Edge detect
+		Canny(errodeImg, cannyImg, 50, 300);
 		for (int j = 0; j < n_rois; j++) {
 
 			// Set parameters for ROI

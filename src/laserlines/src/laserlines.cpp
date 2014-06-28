@@ -20,6 +20,7 @@ Mat cdst;       // final image
 Mat cannyImg;  	// Canny edge image
 Mat greenImg;	// Image containing greens
 Mat HSVImg;	// HSV color image
+Mat errodeImg;
 
 
 int roi_height,img_height,img_width;
@@ -50,30 +51,34 @@ int calc_dist(Point center, int height){
 };
 
 void init_images(int width, int height){
+	img 		= Mat(height, width, IPL_DEPTH_8U, 3);
 	HSVImg 		= Mat(height, width, IPL_DEPTH_8U, 3);
 	greenImg 	= Mat(height, width, IPL_DEPTH_8U, 3);
 	invImg 		= Mat(height, width, IPL_DEPTH_8U, 1);
 	blurImg 	= Mat(height, width, IPL_DEPTH_8U, 1);
 	bwImg 		= Mat(height, width, IPL_DEPTH_8U, 1);
 	cannyImg 	= Mat(height, width, IPL_DEPTH_8U, 1);
+//	errodeImg 	= Mat(height, width, IPL_DEPTH_8U, 1);
 };
 
 int find_ranges(OpenROVmessages::LaserMsg *msg){
 
-
-
 	int32_t top_dists[msg->n_rois];
 	int32_t bottom_dists[msg->n_rois];
 	int32_t x_center[msg->n_rois];
-	width = msg->frame_width;
-	height = msg->frame_height;
+//	width = msg->frame_width;
+//	height = msg->frame_height;
+	width = 1280;
+	height = 720;
 	
 	//img = imread("/home/nicholas/openrov/src/laserlines/resources/focal_9238_3m.png");
 	//img = imread("/home/nicholas/openrov/src/laserlines/resources/laser_path/0001.png");
 
 	Size s = img.size();
-	width = s.width;
-	height = s.height;
+	ROS_INFO("Set image size: %dx%d",msg->frame_width,msg->frame_height);
+	ROS_INFO("Actual image size: %dx%d",s.width,s.height);
+	//width = s.width;
+	//height = s.height;
 
 	// Check that image is loaded
 	if(!img.data){ return -1;}
@@ -82,22 +87,30 @@ int find_ranges(OpenROVmessages::LaserMsg *msg){
 	cvtColor(img, HSVImg, CV_BGR2HSV);
 
 	// Find greens in image
-//	inRange(HSVImg, Scalar(80/2,100,100), Scalar(140/2,255,255), greenImg);
-	inRange(HSVImg, Scalar(5,10,10), Scalar(70,255,255), greenImg);
-
-	// Invert image
-	bitwise_not(greenImg,invImg);
-
-	// Blur image
-	GaussianBlur(greenImg, blurImg, Size(3,3),2,2);
-
-	// Edge detect
-	Canny(blurImg, cannyImg, 50, 300);
+	inRange(HSVImg, Scalar(80/2,0,100), Scalar(140/2,255,255), greenImg);
+//	inRange(HSVImg, Scalar(5,10,10), Scalar(70,255,255), greenImg);
 
 	// Create Binary image with a threshold value of 128
-	threshold(cannyImg, bwImg, 1, 255.0, THRESH_BINARY);
-	cvtColor(bwImg, cdst, CV_GRAY2BGR);
-	
+	threshold(greenImg, bwImg, 1, 255.0, THRESH_BINARY);
+
+	// Invert image
+	bitwise_not(bwImg,invImg);
+
+	// Blur image
+	GaussianBlur(invImg, blurImg, Size(3,3),2,2);
+
+	// Erode green lines
+	Mat Kernel(Size(2, 2), CV_8UC1);
+	erode(bwImg,errodeImg,Kernel);
+
+	// Edge detect
+	int sobel = 3;
+	int lower_thres = 100;
+	int upper_thres = 200;
+	Canny(errodeImg, cannyImg, lower_thres, upper_thres,sobel);
+
+	cvtColor(cannyImg, cdst, CV_GRAY2BGR);
+
 	for (int j = 0; j < msg->n_rois; j++) {
 
 		// Set parameters for ROI
@@ -107,16 +120,18 @@ int find_ranges(OpenROVmessages::LaserMsg *msg){
 
 		// Set and draw region of interest (TOP)
 		region_of_interest = Rect(x_roi, 0, roi_width, roi_height );
-		top_roi = bwImg(region_of_interest);
+		top_roi = cannyImg(region_of_interest);
+//		top_roi = bwImg(region_of_interest);
 		rectangle(cdst, region_of_interest, Scalar(0,0,255), 1, 8, 0);
 		// (BOTTOM)
 		region_of_interest = Rect(x_roi, roi_height, roi_width, roi_height );
-		bottom_roi = bwImg(region_of_interest);
+		bottom_roi = cannyImg(region_of_interest);
+//		bottom_roi = bwImg(region_of_interest);
 		rectangle(cdst, region_of_interest, Scalar(0,255,255), 1, 8, 0);
 
 		// Find lines
-		HoughLinesP(top_roi, top_lines, 1, CV_PI/180, 5, (int)width/msg->n_rois/3, 5 );
-		HoughLinesP(bottom_roi, bottom_lines, 1, CV_PI/180, 5, (int)width/msg->n_rois/3, 5 );
+		HoughLinesP(top_roi, top_lines, 1, CV_PI/180, 1, (int)width/msg->n_rois/3, 5 );
+		HoughLinesP(bottom_roi, bottom_lines, 1, CV_PI/180, 1, (int)width/msg->n_rois/3, 5 );
 
 		// Find the center of lines
 		try {
@@ -179,7 +194,8 @@ int main(int argc, char **argv)
 	OpenROVmessages::LaserMsg msg;
 
 	// Set frame size down from 1080p to 640*480
-	init_images(msg.frame_width,msg.frame_height);
+//	init_images(msg.frame_width,msg.frame_height);
+	init_images(1280,720);
 
 	img = imread(argv[1]);
 	while (ros::ok())
