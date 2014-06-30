@@ -16,6 +16,7 @@ int main(int argc, char **argv)
 {
 	VideoCapture capture(0);
 	Mat image;
+	Stringstream ss;
     
 	if (!capture.isOpened()) {
 		cout << "Error, did not open Camera" << endl;
@@ -31,22 +32,24 @@ int main(int argc, char **argv)
 	ros::Publisher chatter_pub = n.advertise<OpenROVmessages::LaserMsg>("laser", 100);
 
 	// Set update rate in Hz
-	ros::Rate loop_rate(10);
+	ros::Rate loop_rate(2);
 
 	// Create msg
 	OpenROVmessages::LaserMsg msg;
-	
+
 	int count = 0;
-    String name;
-    
+	String name, run_no;
+
 	while (ros::ok())
 	{
 		// Capture image
-		capture >> img;
-        
-        name = "~/openrov/pictures/" + to_string(count) + ".png";
+		capture >> image;
+		ss << count;
+		ss >> run_no;
+
+		name = "~/openrov/pictures/" + run_no + ".png";
 		// Save image
-        imwrite(name, bwImg);
+		imwrite(name, image);
 
 		// Publish data
 		chatter_pub.publish(msg);
