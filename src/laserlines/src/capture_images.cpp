@@ -16,11 +16,13 @@ int main(int argc, char **argv)
 {
 	VideoCapture capture(0);
 	Mat image;
+	stringstream ss;
     
 	if (!capture.isOpened()) {
 		cout << "Error, did not open Camera" << endl;
 		return -1;	
 	}
+
 	// init ROS node for the roscore
 	ros::init(argc, argv, "Image Capturer");
 
@@ -35,18 +37,21 @@ int main(int argc, char **argv)
 
 	// Create msg
 	OpenROVmessages::LaserMsg msg;
-	
+
 	int count = 0;
-    String name;
-    
+	String name,run_no;
+
 	while (ros::ok())
 	{
 		// Capture image
-		capture >> img;
-        
-        name = "~/openrov/pictures/" + to_string(count) + ".png";
+		capture >> image;
+
+		ss << count;
+		ss >> run_no;
+
+		name = "~/openrov/pictures/" + run_no + ".png";
 		// Save image
-        imwrite(name, bwImg);
+		imwrite(name, image);
 
 		// Publish data
 		chatter_pub.publish(msg);
