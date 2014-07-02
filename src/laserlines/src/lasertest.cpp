@@ -45,7 +45,7 @@ pcl::PointCloud<pcl::PointXYZ>::Ptr top_cloud 		(new pcl::PointCloud<pcl::PointX
 pcl::PointCloud<pcl::PointXYZ>::Ptr bottom_cloud 	(new pcl::PointCloud<pcl::PointXYZ>);
 pcl::PointCloud<pcl::PointXYZ>::Ptr temp_cloud 		(new pcl::PointCloud<pcl::PointXYZ>);
 pcl::PointCloud<pcl::PointXYZRGB>::Ptr inlier_cloud 	(new pcl::PointCloud<pcl::PointXYZRGB>);
-pcl::PointCloud<pcl::PointXYZ>::Ptr all_cloud 	(new pcl::PointCloud<pcl::PointXYZ>);
+//pcl::PointCloud<pcl::PointXYZ>::Ptr all_cloud 	(new pcl::PointCloud<pcl::PointXYZ>);
 pcl::PointCloud<pcl::PointXYZRGB>::Ptr final_cloud 	(new pcl::PointCloud<pcl::PointXYZRGB>);
 // Initialize pointers to coefficients and inliers
 pcl::ModelCoefficients::Ptr coefficients 		(new pcl::ModelCoefficients);
@@ -73,17 +73,17 @@ simpleVis ()
 	viewer->addCoordinateSystem (0.1);
 	pcl::visualization::PointCloudColorHandlerRGBField<pcl::PointXYZRGB> rgb(final_cloud);
 	// Add cloud
-	//viewer->addPointCloud<pcl::PointXYZRGB> (final_cloud,rgb, "sample cloud");
+	viewer->addPointCloud<pcl::PointXYZRGB> (final_cloud,rgb, "sample cloud");
 
-	viewer->addPointCloud<pcl::PointXYZ> (all_cloud, "sample cloud");
+	//viewer->addPointCloud<pcl::PointXYZ> (all_cloud, "sample cloud");
 	viewer->setPointCloudRenderingProperties (pcl::visualization::PCL_VISUALIZER_POINT_SIZE, 3, "sample cloud");
 	viewer->initCameraParameters ();
 
 	while (!viewer->wasStopped ())
 	{
 		viewer->spinOnce (100);
-		//viewer->updatePointCloud<pcl::PointXYZRGB> (final_cloud,rgb, "sample cloud");
-		viewer->updatePointCloud<pcl::PointXYZ> (all_cloud, "sample cloud");
+		viewer->updatePointCloud<pcl::PointXYZRGB> (final_cloud,rgb, "sample cloud");
+		//viewer->updatePointCloud<pcl::PointXYZ> (all_cloud, "sample cloud");
 		boost::this_thread::sleep (boost::posix_time::microseconds (100000));
 	}
 	return 0;
@@ -126,7 +126,7 @@ find_planes(int img_no, pcl::PointCloud<pcl::PointXYZ>::ConstPtr cloud_a, pcl::P
 	Eigen::Vector3f axis = Eigen::Vector3f(1.0,1.0,0.0);    // here specify the plane i.e X or Y or Z
 	
 	// Set a allowed deviation angle from vector axis
-	seg.setEpsAngle((65*CV_PI)/180);
+	seg.setEpsAngle((45*CV_PI)/180);
 	seg.setAxis(axis);
 
 	temp_cloud->width = 81;
@@ -135,7 +135,7 @@ find_planes(int img_no, pcl::PointCloud<pcl::PointXYZ>::ConstPtr cloud_a, pcl::P
 	// Fill the final point cloud with data points	
 	*temp_cloud = *cloud_a;
 	*temp_cloud += *cloud_b;
-	*all_cloud = *temp_cloud;
+//	*all_cloud = *temp_cloud;
 
 	int nr_points = temp_cloud->points.size();
 
@@ -214,7 +214,8 @@ int main(int argc, char **argv)
 		if(!img.data){ return -1;}
 
 		cvtColor(img,img,CV_BGR2HSV);
-		inRange(img,Scalar(40,150,180),Scalar(80,255,255),greenImg);
+		//inRange(img,Scalar(40,150,180),Scalar(80,255,255),greenImg);
+		inRange(img,Scalar(40,200,10),Scalar(70,255,100),greenImg);
 
 		threshold(greenImg,bwImg,1,255,THRESH_BINARY);
 
