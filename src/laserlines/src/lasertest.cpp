@@ -119,7 +119,8 @@ find_planes(int img_no, pcl::PointCloud<pcl::PointXYZ>::ConstPtr cloud_a, pcl::P
 	
 	// Set method and threshold
 	seg.setMethodType (pcl::SAC_RANSAC);
-	seg.setDistanceThreshold (0.05);
+	//seg.setDistanceThreshold (0.05);
+	seg.setDistanceThreshold (0.02);
 	seg.setInputCloud (temp_cloud);
 	
 	// Set the axis for which to search for perpendicular planes
