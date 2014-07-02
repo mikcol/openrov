@@ -28,8 +28,8 @@ using namespace std;
 
 
 Mat img;     	// Camera img
-Mat greenImg;	// Green image
 Mat bwImg;      // binary image
+Mat greenImg;
 
 Mat top_roi,bottom_roi;
 
@@ -45,7 +45,6 @@ pcl::PointCloud<pcl::PointXYZ>::Ptr top_cloud 		(new pcl::PointCloud<pcl::PointX
 pcl::PointCloud<pcl::PointXYZ>::Ptr bottom_cloud 	(new pcl::PointCloud<pcl::PointXYZ>);
 pcl::PointCloud<pcl::PointXYZ>::Ptr temp_cloud 		(new pcl::PointCloud<pcl::PointXYZ>);
 pcl::PointCloud<pcl::PointXYZRGB>::Ptr inlier_cloud 	(new pcl::PointCloud<pcl::PointXYZRGB>);
-pcl::PointCloud<pcl::PointXYZ>::Ptr all_cloud 	(new pcl::PointCloud<pcl::PointXYZ>);
 pcl::PointCloud<pcl::PointXYZRGB>::Ptr final_cloud 	(new pcl::PointCloud<pcl::PointXYZRGB>);
 // Initialize pointers to coefficients and inliers
 pcl::ModelCoefficients::Ptr coefficients 		(new pcl::ModelCoefficients);
@@ -73,17 +72,14 @@ simpleVis ()
 	viewer->addCoordinateSystem (0.1);
 	pcl::visualization::PointCloudColorHandlerRGBField<pcl::PointXYZRGB> rgb(final_cloud);
 	// Add cloud
-	//viewer->addPointCloud<pcl::PointXYZRGB> (final_cloud,rgb, "sample cloud");
-
-	viewer->addPointCloud<pcl::PointXYZ> (all_cloud, "sample cloud");
+	viewer->addPointCloud<pcl::PointXYZRGB> (final_cloud,rgb, "sample cloud");
 	viewer->setPointCloudRenderingProperties (pcl::visualization::PCL_VISUALIZER_POINT_SIZE, 3, "sample cloud");
 	viewer->initCameraParameters ();
 
 	while (!viewer->wasStopped ())
 	{
 		viewer->spinOnce (100);
-		//viewer->updatePointCloud<pcl::PointXYZRGB> (final_cloud,rgb, "sample cloud");
-		viewer->updatePointCloud<pcl::PointXYZ> (all_cloud, "sample cloud");
+		viewer->updatePointCloud<pcl::PointXYZRGB> (final_cloud,rgb, "sample cloud");
 		boost::this_thread::sleep (boost::posix_time::microseconds (100000));
 	}
 	return 0;
@@ -108,7 +104,7 @@ int calc_dist(Point center, int height){
 
 void init_images(int width, int height){
 	bwImg 		= Mat(height, width, IPL_DEPTH_8U, 1);
-	greenImg 	= Mat(height, width, IPL_DEPTH_8U, 3);
+	greenImg 		= Mat(height, width, IPL_DEPTH_8U, 1);
 };
 
 void
@@ -135,7 +131,6 @@ find_planes(int img_no, pcl::PointCloud<pcl::PointXYZ>::ConstPtr cloud_a, pcl::P
 	// Fill the final point cloud with data points	
 	*temp_cloud = *cloud_a;
 	*temp_cloud += *cloud_b;
-	*all_cloud = *temp_cloud;
 
 	int nr_points = temp_cloud->points.size();
 
@@ -214,30 +209,12 @@ int main(int argc, char **argv)
 		if(!img.data){ return -1;}
 
 		cvtColor(img,img,CV_BGR2HSV);
-		inRange(img,Scalar(40,150,180),Scalar(80,255,255),greenImg);
+		inRange(img,Scalar(40,200,10),Scalar(70,255,100),greenImg);
 
 		threshold(greenImg,bwImg,1,255,THRESH_BINARY);
-
-		// Create Binary image with a threshold value of 128
-		//cvtColor(img,bwImg,CV_BGR2GRAY);
-		//threshold(bwImg, bwImg, 1, 255.0, THRESH_BINARY);
-		//ROS_INFO("TEST3");
-
-		Mat bwclone = bwImg.clone();
-		Mat skel(img.size(),CV_8UC1,Scalar(0));
-		Mat temp,eroded;
-		Mat element = getStructuringElement(MORPH_CROSS,Size(3,3));
-		bool done;
-		do {
-			erode(bwclone,eroded,element);
-			dilate(eroded,temp,element);
-			subtract(bwclone,temp,temp);
-			bitwise_or(skel,temp,skel);
-			eroded.copyTo(bwclone);
-
-			done = (countNonZero(bwclone) == 0);
-		}while(!done);
-		bwImg=skel;
+		// Convert to grayscale
+//		cvtColor(img,bwImg,CV_BGR2GRAY);	
+//		threshold(bwImg,bwImg,128,255,THRESH_BINARY);
 
 		for (int j = 0; j < n_rois; j++) {
 
@@ -249,7 +226,6 @@ int main(int argc, char **argv)
 			// Set and draw region of interest (TOP)
 			region_of_interest = Rect(x_roi, 0, roi_width, roi_height );
 			top_roi = bwImg(region_of_interest);
-			
 			// (BOTTOM)
 			region_of_interest = Rect(x_roi, roi_height, roi_width, roi_height );
 			bottom_roi = bwImg(region_of_interest);

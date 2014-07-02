@@ -32,7 +32,7 @@ Mat bottom_roi;
 vector<Vec4i> top_lines,bottom_lines;
 Point top_center,bottom_center;
 
-VideoCapture capture(0);
+//VideoCapture capture(0);
 
 // Finds center of line
 int find_center(vector<Vec4i> lines){
@@ -52,6 +52,9 @@ int calc_dist(Point center, int height){
 };
 
 void init_images(int width, int height){
+	/* HACK CODE*/
+	img 		= Mat(height, width, IPL_DEPTH_8U, 1);
+//	/* NORMAL CODE */
 	img 		= Mat(height, width, IPL_DEPTH_8U, 3);
 	HSVImg 		= Mat(height, width, IPL_DEPTH_8U, 3);
 	greenImg 	= Mat(height, width, IPL_DEPTH_8U, 3);
@@ -69,17 +72,16 @@ int find_ranges(OpenROVmessages::LaserMsg *msg){
 	int32_t x_center[msg->n_rois];
 //	width = msg->frame_width;
 //	height = msg->frame_height;
-	width = 1280;
-	height = 720;
 	
 	//img = imread("/home/nicholas/openrov/src/laserlines/resources/focal_9238_3m.png");
 	//img = imread("/home/nicholas/openrov/src/laserlines/resources/laser_path/0001.png");
+	img = imread("/home/nicholas/Downloads/range_finder_skelimg.png");
 
 	Size s = img.size();
 	ROS_INFO("Set image size: %dx%d",msg->frame_width,msg->frame_height);
 	ROS_INFO("Actual image size: %dx%d",s.width,s.height);
-	//width = s.width;
-	//height = s.height;
+	width = s.width;
+	height = s.height;
 
 	// Check that image is loaded
 	if(!img.data){ return -1;}
@@ -109,8 +111,26 @@ int find_ranges(OpenROVmessages::LaserMsg *msg){
 	int lower_thres = 100;
 	int upper_thres = 200;
 	Canny(errodeImg, cannyImg, lower_thres, upper_thres,sobel);
-
+	
 	cvtColor(cannyImg, cdst, CV_GRAY2BGR);
+
+
+	Mat bwclone = img.clone();
+	Mat skel(img.size(),CV_8UC1,Scalar(0));
+	Mat temp,eroded;
+	Mat element = getStructuringElement(MORPH_CROSS,Size(3,3));
+	bool done;
+	do {
+	erode(bwclone,eroded,element);
+	dilate(eroded,temp,element);
+	subtract(bwclone,temp,temp);
+	bitwise_or(skel,temp,skel);
+	eroded.copyTo(bwclone);
+
+	done = (countNonZero(bwclone) == 0);
+	}while(!done);
+	cvtColor(skel, cdst, CV_GRAY2BGR);
+
 
 	for (int j = 0; j < msg->n_rois; j++) {
 
@@ -121,12 +141,14 @@ int find_ranges(OpenROVmessages::LaserMsg *msg){
 
 		// Set and draw region of interest (TOP)
 		region_of_interest = Rect(x_roi, 0, roi_width, roi_height );
-		top_roi = cannyImg(region_of_interest);
+		top_roi = skel(region_of_interest);
+		//	top_roi = cannyImg(region_of_interest);
 //		top_roi = bwImg(region_of_interest);
 		rectangle(cdst, region_of_interest, Scalar(0,0,255), 1, 8, 0);
 		// (BOTTOM)
 		region_of_interest = Rect(x_roi, roi_height, roi_width, roi_height );
-		bottom_roi = cannyImg(region_of_interest);
+              bottom_roi = skel(region_of_interest);
+//		bottom_roi = cannyImg(region_of_interest);
 //		bottom_roi = bwImg(region_of_interest);
 		rectangle(cdst, region_of_interest, Scalar(0,255,255), 1, 8, 0);
 
@@ -179,11 +201,11 @@ int find_ranges(OpenROVmessages::LaserMsg *msg){
 
 int main(int argc, char **argv)
 {
-	if (!capture.isOpened()) {
+/*	if (!capture.isOpened()) {
 		cout << "Error, did not open Camera" << endl;
 		return -1;	
 	}
-	// init ROS node for the roscore
+*/	// init ROS node for the roscore
 	ros::init(argc, argv, "Range_finder");
 
 	// create node
@@ -208,7 +230,7 @@ int main(int argc, char **argv)
 	while (ros::ok())
 	{
 		// Capture image
-		capture >> img;
+//		capture >> img;
 
 		// fill msg with data
 		find_ranges(&msg);
