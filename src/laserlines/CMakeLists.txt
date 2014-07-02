@@ -121,9 +121,9 @@ add_executable(lasertest src/lasertest.cpp)
 link_directories(${PCL_LIBRARY_DIRS})
 target_link_libraries(lasertest  ${PCL_LIBRARIES}  ${catkin_LIBRARIES} ${OpenCV_LIBRARIES}  )
 
-add_executable(range_finder src/range_finder.cpp)
+add_executable(lasertest_simulated src/lasertest_simulated.cpp)
 link_directories(${PCL_LIBRARY_DIRS})
-target_link_libraries(range_finder  ${PCL_LIBRARIES}  ${catkin_LIBRARIES} ${OpenCV_LIBRARIES}  )
+target_link_libraries(lasertest_simulated  ${PCL_LIBRARIES}  ${catkin_LIBRARIES} ${OpenCV_LIBRARIES}  )
 # /usr/lib/*.so.5.8 /usr/lib/libvtkCommon.so.5.8
 ## Declare a cpp library
 # add_library(laserlines
