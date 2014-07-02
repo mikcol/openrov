@@ -127,7 +127,8 @@ find_planes(int img_no, pcl::PointCloud<pcl::PointXYZ>::ConstPtr cloud_a, pcl::P
 	Eigen::Vector3f axis = Eigen::Vector3f(1.0,1.0,0.0);    // here specify the plane i.e X or Y or Z
 	
 	// Set a allowed deviation angle from vector axis
-	seg.setEpsAngle((45*CV_PI)/180);
+	seg.setEpsAngle((65*CV_PI)/180);
+//	seg.setEpsAngle((45*CV_PI)/180);
 	seg.setAxis(axis);
 
 	temp_cloud->width = 81;
