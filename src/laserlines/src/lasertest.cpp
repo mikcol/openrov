@@ -216,8 +216,8 @@ int main(int argc, char **argv)
 		if(!img.data){ return -1;}
 
 		cvtColor(img,img,CV_BGR2HSV);
-		//inRange(img,Scalar(40,150,180),Scalar(80,255,255),greenImg);
-		inRange(img,Scalar(40,200,10),Scalar(70,255,100),greenImg);
+		inRange(img,Scalar(40,150,180),Scalar(80,255,255),greenImg);
+		//inRange(img,Scalar(40,200,10),Scalar(70,255,100),greenImg);
 
 		threshold(greenImg,bwImg,1,255,THRESH_BINARY);
 
