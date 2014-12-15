@@ -106,8 +106,6 @@ include_directories(
 add_executable(laserlines src/laserlines.cpp)
 target_link_libraries(laserlines ${catkin_LIBRARIES} ${OpenCV_LIBRARIES})
 
-#add_executable(capture_images src/capture_images.cpp)
-#target_link_libraries(capture_images ${catkin_LIBRARIES} ${OpenCV_LIBRARIES})
 
 add_executable(laserlistener src/laserlistener.cpp)
 link_directories(${PCL_LIBRARY_DIRS})
@@ -124,6 +122,13 @@ target_link_libraries(lasertest  ${PCL_LIBRARIES}  ${catkin_LIBRARIES} ${OpenCV_
 add_executable(lasertest_simulated src/lasertest_simulated.cpp)
 link_directories(${PCL_LIBRARY_DIRS})
 target_link_libraries(lasertest_simulated  ${PCL_LIBRARIES}  ${catkin_LIBRARIES} ${OpenCV_LIBRARIES}  )
+
+
+
+
+
+#add_executable(capture_images src/capture_images.cpp)
+#target_link_libraries(capture_images ${catkin_LIBRARIES} ${OpenCV_LIBRARIES})
 # /usr/lib/*.so.5.8 /usr/lib/libvtkCommon.so.5.8
 ## Declare a cpp library
 # add_library(laserlines
