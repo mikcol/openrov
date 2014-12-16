@@ -215,10 +215,13 @@ int main(int argc, char **argv)
 		// Check that image is loaded
 		if(!img.data){ return -1;}
 
+		// Convert to HSV color format
 		cvtColor(img,img,CV_BGR2HSV);
-		inRange(img,Scalar(40,150,180),Scalar(80,255,255),greenImg);
+		// Extract greens
+		inRange(img,Scalar(30,150,180),Scalar(80,255,255),greenImg);
 		//inRange(img,Scalar(40,200,10),Scalar(70,255,100),greenImg);
 
+		// converto to binary (black & white)
 		threshold(greenImg,bwImg,1,255,THRESH_BINARY);
 
 		// Create Binary image with a threshold value of 128
