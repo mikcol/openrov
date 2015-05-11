@@ -91,7 +91,8 @@ simpleVis ()
 }
 
 // Finds center of line
-int find_center(vector<Vec4i> lines){
+int 
+find_center(vector<Vec4i> lines){
 	//(y1+y2)/2
 	if (lines.data()) {
 		int center =(lines[0][1]+ lines[0][3])/2;
@@ -101,12 +102,14 @@ int find_center(vector<Vec4i> lines){
 };
 
 // Calculates distance from line
-int calc_dist(Point center, int height){
+int 
+calc_dist(Point center, int height){
 	int dist =  center.y;
 	return dist;
 };
 
-void init_images(int width, int height){
+void
+init_images(int width, int height){
 	bwImg 		= Mat(height, width, IPL_DEPTH_8U, 1);
 	greenImg 	= Mat(height, width, IPL_DEPTH_8U, 3);
 };
@@ -192,7 +195,8 @@ find_planes(int img_no, pcl::PointCloud<pcl::PointXYZ>::ConstPtr cloud_a, pcl::P
 	boost::this_thread::sleep (boost::posix_time::microseconds (100000));
 }
 
-int main(int argc, char **argv)
+int 
+main(int argc, char **argv)
 {
 
 	boost::thread viewer_thread(simpleVis);

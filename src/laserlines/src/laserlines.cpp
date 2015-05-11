@@ -32,7 +32,7 @@ Mat bottom_roi;
 vector<Vec4i> top_lines,bottom_lines;
 Point top_center,bottom_center;
 
-//VideoCapture capture(0);
+VideoCapture capture(0);
 
 // Finds center of line
 int find_center(vector<Vec4i> lines){
@@ -74,8 +74,8 @@ int find_ranges(OpenROVmessages::LaserMsg *msg){
 //	height = msg->frame_height;
 	
 	//img = imread("/home/nicholas/openrov/src/laserlines/resources/focal_9238_3m.png");
-	//img = imread("/home/nicholas/openrov/src/laserlines/resources/laser_path/0001.png");
-	img = imread("/home/nicholas/Downloads/range_finder_skelimg.png");
+	img = imread("/home/nicholas/openrov/src/laserlines/resources/laser_path/0001.png");
+	//img = imread("/home/nicholas/Downloads/range_finder_skelimg.png");
 
 	Size s = img.size();
 	ROS_INFO("Set image size: %dx%d",msg->frame_width,msg->frame_height);
@@ -117,19 +117,19 @@ int find_ranges(OpenROVmessages::LaserMsg *msg){
 
 	Mat bwclone = img.clone();
 	Mat skel(img.size(),CV_8UC1,Scalar(0));
-	Mat temp,eroded;
-	Mat element = getStructuringElement(MORPH_CROSS,Size(3,3));
-	bool done;
-	do {
-	erode(bwclone,eroded,element);
-	dilate(eroded,temp,element);
-	subtract(bwclone,temp,temp);
-	bitwise_or(skel,temp,skel);
-	eroded.copyTo(bwclone);
+    Mat temp,eroded;
+    Mat element = getStructuringElement(MORPH_CROSS,Size(3,3));
+    bool done;
+    do {
+        erode(bwclone,eroded,element);
+        dilate(eroded,temp,element);
+        subtract(bwclone,temp,temp);
+        bitwise_or(skel,temp,skel);
+        eroded.copyTo(bwclone);
 
-	done = (countNonZero(bwclone) == 0);
-	}while(!done);
-	cvtColor(skel, cdst, CV_GRAY2BGR);
+        done = (countNonZero(bwclone) == 0);
+    }while(!done);
+    cvtColor(skel, cdst, CV_GRAY2BGR);
 
 
 	for (int j = 0; j < msg->n_rois; j++) {
@@ -201,11 +201,11 @@ int find_ranges(OpenROVmessages::LaserMsg *msg){
 
 int main(int argc, char **argv)
 {
-/*	if (!capture.isOpened()) {
+	if (!capture.isOpened()) {
 		cout << "Error, did not open Camera" << endl;
 		return -1;	
 	}
-*/	// init ROS node for the roscore
+	// init ROS node for the roscore
 	ros::init(argc, argv, "Range_finder");
 
 	// create node
@@ -221,8 +221,8 @@ int main(int argc, char **argv)
 	OpenROVmessages::LaserMsg msg;
 
 	// Set frame size down from 1080p to 640*480
-//	init_images(msg.frame_width,msg.frame_height);
-	init_images(1280,720);
+	init_images(msg.frame_width,msg.frame_height);
+//	init_images(1280,720);
 
 	//img = imread(argv[1]);
 	

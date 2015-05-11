@@ -106,10 +106,16 @@ include_directories(
 add_executable(laserlines src/laserlines.cpp)
 target_link_libraries(laserlines ${catkin_LIBRARIES} ${OpenCV_LIBRARIES})
 
+add_executable(camera_stream src/camera_stream.cpp)
+target_link_libraries(camera_stream ${catkin_LIBRARIES} ${OpenCV_LIBRARIES})
 
 add_executable(laserlistener src/laserlistener.cpp)
 link_directories(${PCL_LIBRARY_DIRS})
 target_link_libraries(laserlistener  ${PCL_LIBRARIES}  ${catkin_LIBRARIES} ${OpenCV_LIBRARIES}  )
+
+add_executable(plane_calib src/plane_calib.cpp)
+link_directories(${PCL_LIBRARY_DIRS})
+target_link_libraries(plane_calib  ${PCL_LIBRARIES}  ${catkin_LIBRARIES} ${OpenCV_LIBRARIES}  )
 
 add_executable(find_planes src/find_planes.cpp)
 link_directories(${PCL_LIBRARY_DIRS})
